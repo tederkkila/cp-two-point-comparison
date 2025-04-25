@@ -14,7 +14,7 @@ export const background = '#f3f3f3';
 
 const minX: number = 30;
 const maxX: number = 3000;//60*60;
-const logValues = [minX, 1*60, 3*60, 5*60, 10*60, 20*60, 60*60, maxX];
+const logValues = [minX, 60, 3*60, 5*60, 10*60, 20*60, 60*60, maxX];
 
 interface LinearGraphData {
   testOneShortTime: number;
