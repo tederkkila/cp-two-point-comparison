@@ -128,7 +128,7 @@ export default function LinearChart({
                       fill="transparent"
                     />
                   ))}
-                <LinePath<number>
+                <LinePath<DataPoint>
                   curve={allCurves[curveType]}
                   data={lineData}
                   x={(d) => xScale(getX(d)) ?? 0}
