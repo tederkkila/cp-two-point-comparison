@@ -1,0 +1,322 @@
+//TODO Add constant W' block and change color as as it goes up or down
+//TODO box for P zones. Show severe heavy moderate as zones too.
+
+import { Group } from '@visx/group';
+import { curveBasis } from '@visx/curve';
+import { Circle, LinePath } from '@visx/shape';
+import { Threshold } from '@visx/threshold';
+import { scaleLinear, scaleLog, coerceNumber } from '@visx/scale';
+import { AxisLeft, AxisBottom } from '@visx/axis';
+import { GridRows, GridColumns } from '@visx/grid';
+import { calculateIntercept, calculateSlope, plotCP } from "../libs/geometry";
+
+export const background = '#f3f3f3';
+
+const minX: number = 30;
+const maxX: number = 3000;//60*60;
+const logValues = [minX, 1*60, 3*60, 5*60, 10*60, 20*60, 60*60, maxX];
+
+interface LinearGraphData {
+  testOneShortTime: number;
+  testOneShortWatt: number;
+  testOneLongTime: number;
+  testOneLongWatt: number;
+  testTwoShortTime: number;
+  testTwoShortWatt: number;
+  testTwoLongTime: number;
+  testTwoLongWatt: number;
+}
+
+interface LineDataPoint {
+  x: number;
+  t1: number;
+  t2: number;
+}
+
+interface DataPoint {
+  x: number;
+  y: number;
+  color: string;
+}
+
+// data accessors
+const getX = (d: LineDataPoint) => d.x;
+const t1 = (d: LineDataPoint) => d.t1;
+const t2 = (d: LineDataPoint) => d.t2;
+
+const pointX = (d: DataPoint) => d.x;
+const pointY = (d: DataPoint) => d.y;
+const pointC = (d: DataPoint) => d.color;
+
+const defaultMargin = { top: 40, right: 30, bottom: 50, left: 50 };
+
+const createCPDataLine = (
+  t1slope:number,
+  t1intercept:number,
+  t2slope:number,
+  t2intercept:number,
+  minX: number,
+  maxX: number,
+) => {
+  //console.log(data);
+
+  //console.log(`Test One: y = ${t1slope} x + ${t1intercept}`);
+  //console.log(`Test Two: y = ${t2slope} x + ${t2intercept}`);
+
+  const xStep = 10;
+  const arrayCount = maxX/xStep - minX/xStep + 1;
+  return new Array(arrayCount).fill(null).map((_, i) =>
+    generateDataRow(i, minX, xStep, t1slope, t1intercept, t2slope, t2intercept)
+  );
+}
+
+const generateDataRow = (
+  x: number,
+  minX: number,
+  xStep: number,
+  t1slope: number,
+  t1intercept: number,
+  t2slope: number,
+  t2intercept: number,
+): LineDataPoint => {
+
+  return {
+    x : minX + x * xStep,
+    t1: plotCP(minX + x * xStep, t1slope, t1intercept),
+    t2: plotCP(minX + x * xStep, t2slope, t2intercept)
+  }
+}
+
+const createPointData = (
+  t1x0: number,
+  t1x1: number,
+  t1y0: number,
+  t1y1: number,
+  t2x0: number,
+  t2x1: number,
+  t2y0: number,
+  t2y1: number,
+): DataPoint[] => {
+
+  const dataPoints: DataPoint[] = [];
+  dataPoints.push(generatePointRow(t1x0, t1y0, 'gray'));
+  dataPoints.push(generatePointRow(t1x1, t1y1, 'gray'));
+  dataPoints.push(generatePointRow(t2x0, t2y0, 'red'));
+  dataPoints.push(generatePointRow(t2x1, t2y1, 'red'));
+
+  return dataPoints
+}
+
+const generatePointRow = (
+  x: number,
+  y: number,
+  color: string,
+): DataPoint => {
+  return {
+    x    : x,
+    y    : y,
+    color: color,
+  }
+}
+
+export type ThresholdProps = {
+  width: number;
+  height: number;
+  data: LinearGraphData;
+  margin?: { top: number; right: number; bottom: number; left: number };
+};
+
+export default function CPThreshold({ width, height, data, margin = defaultMargin }: ThresholdProps) {
+
+  // const data:LinearGraphData = {
+  //   testOneShortTime: 180,
+  //   testOneShortWatt: 316,
+  //   testOneLongTime : 600,
+  //   testOneLongWatt : 286,
+  //   testTwoShortTime: 180,
+  //   testTwoShortWatt: 341,
+  //   testTwoLongTime : 600,
+  //   testTwoLongWatt : 287,
+  // }
+
+  //console.log("Updating CPThreshold");
+  // console.log(data);
+  width = Math.floor(width);
+
+
+  const t1x0: number = data.testOneShortTime;
+  const t1x1: number = data.testOneLongTime;
+  const t1y0: number = data.testOneShortWatt;
+  const t1y1: number = data.testOneLongWatt;
+
+  const t2x0: number = data.testTwoShortTime;
+  const t2x1: number = data.testTwoLongTime;
+  const t2y0: number = data.testTwoShortWatt;
+  const t2y1: number = data.testTwoLongWatt;
+
+  const t1slope = calculateSlope(t1x0, t1x1, t1x0 * t1y0, t1x1 * t1y1);
+  const t2slope = calculateSlope(t2x0, t2x1, t2x0 * t2y0, t2x1 * t2y1);
+  const t1intercept = calculateIntercept(t1slope, t1x0, t1x0 * t1y0);
+  const t2intercept = calculateIntercept(t2slope, t2x0, t2x0 * t2y0);
+
+  const graphData = createCPDataLine(
+    t1slope, t1intercept, t2slope, t2intercept, minX, maxX
+  );
+  const pointData = createPointData(
+    t1x0, t1x1, t1y0, t1y1, t2x0, t2x1, t2y0, t2y1
+  );
+
+  //console.log(graphData);
+
+  // scales
+  const xScale = scaleLinear<number>({
+    domain: [0, maxX],
+  });
+  const yScale = scaleLinear<number>({
+    domain: [
+      0, // Math.min(...graphData.map((d) => Math.min(t1(d), t2(d)))),
+      Math.max(...graphData.map((d) => Math.max(t1(d), t2(d)))),
+    ],
+    nice  : false,
+  });
+
+  const getMinMax = (vals: (number | { valueOf(): number })[]) => {
+    const numericVals = vals.map(coerceNumber);
+    return [Math.min(...numericVals), Math.max(...numericVals)];
+  };
+
+  const logScale = scaleLog<number>({
+    domain: getMinMax(logValues),
+    range : [0, width-75],
+    nice: false,
+  });
+
+  //console.log(getMinMax(logValues))
+  //console.log(logScale.domain())
+
+  if (width < 10) return null;
+
+  // bounds
+  const xMax = width - margin.left - margin.right;
+  const yMax = height - margin.top - margin.bottom;
+  //console.log("width|margin.left|margin.right", width, margin.left, margin.right);
+  //console.log("xMax/yMax", xMax, yMax);
+
+  // update scale output ranges
+  xScale.range([0, width - 50]);
+  yScale.range([yMax, 0]);
+
+  let cpBlockColor = '#222'
+  if (t1slope < t2slope) {
+    cpBlockColor = 'green';
+  } else if (t1slope > t2slope) {
+    cpBlockColor = 'red';
+  }
+
+  // console.log("height: " + height + ' | ' + yScale(height));
+  // console.log("0: " + 0 + ' | ' + yScale(0));
+
+  const cpHeight = yScale(0) - yScale(t2slope);
+  //console.log("cpHeight: " + cpHeight);
+  const cp80 = t2slope * 0.80;
+  const cp80Height = yScale(0) - yScale(cp80);
+
+  const box60Y = plotCP(60, t2slope, t2intercept);
+  const box60Height = yScale(t2slope) - yScale(box60Y);
+
+  const box120Y = plotCP(120, t2slope, t2intercept);
+  const box120Height = yScale(t2slope) - yScale(box120Y);
+
+  const box180Y = plotCP(180, t2slope, t2intercept);
+  const box180Height = yScale(t2slope) - yScale(box180Y);
+
+  const box300Y = plotCP(300, t2slope, t2intercept);
+  const box300Height = yScale(t2slope) - yScale(box300Y);
+
+
+  return (
+    <div>
+      <svg width={width} height={height}>
+        <rect x={0} y={0} width={width} height={height} fill={background} rx={14}/>
+        <Group left={margin.left} top={margin.top}>
+          <GridRows scale={yScale} width={xMax} height={yMax} stroke="#e0e0e0"/>
+          <GridColumns scale={logScale} width={xMax} height={yMax} stroke="#e0e0e0"/>
+          {/*<line x1={xMax} x2={xMax} y1={0} y2={yMax} stroke="#e0e0e0"/>*/}
+          <AxisBottom top={yMax} scale={logScale} numTicks={width > 520 ? 10 : 5}/>
+          <AxisLeft scale={yScale}/>
+          {/*<Axis
+            orientation={Orientation.bottom}
+            scale={logScale}
+          />*/}
+          <text x="-70" y="15" transform="rotate(-90)" fontSize={10}>
+            Power (Watts)
+          </text>
+
+          <Threshold<LineDataPoint>
+            id={`${Math.random()}`}
+            data={graphData}
+            x={(d) => logScale(getX(d)) ?? 0}
+            y0={(d) => yScale(t1(d)) ?? 0}
+            y1={(d) => yScale(t2(d)) ?? 0}
+            clipAboveTo={0}
+            clipBelowTo={yMax}
+            curve={curveBasis}
+            belowAreaProps={{
+              fill       : 'green',
+              fillOpacity: 0.1,
+            }}
+            aboveAreaProps={{
+              fill       : 'red',
+              fillOpacity: 0.1,
+            }}
+          />
+          <LinePath
+            data={graphData}
+            curve={curveBasis}
+            x={(d) => logScale(getX(d)) ?? 0}
+            y={(d) => yScale(t1(d)) ?? 0}
+            stroke="#222"
+            strokeWidth={1.0}
+            strokeOpacity={0.8}
+            strokeDasharray="1,2"
+          />
+          <LinePath
+            data={graphData}
+            curve={curveBasis}
+            x={(d) => logScale(getX(d)) ?? 0}
+            y={(d) => yScale(t2(d)) ?? 0}
+            stroke="#222"
+            strokeWidth={1.5}
+          />
+          <line x1={logScale(minX)} x2={logScale(3000)} y1={yScale(t2slope)} y2={yScale(t2slope)}
+                stroke={cpBlockColor}/>
+          <rect x={0} y={yScale(t2slope)} width={logScale(3000)} height={cpHeight} fill={cpBlockColor} fillOpacity={0.2}/>
+          <rect x={0} y={yScale(cp80)} width={logScale(3000)} height={cp80Height} fill={cpBlockColor} fillOpacity={0.2}/>
+
+          <rect x={0} y={yScale(box60Y)} width={logScale(60)} height={box60Height} fill={'blue'} fillOpacity={0.1}/>
+          <rect x={0} y={yScale(box120Y)} width={logScale(120)} height={box120Height} fill={'blue'} fillOpacity={0.1}/>
+          <rect x={0} y={yScale(box180Y)} width={logScale(180)} height={box180Height} fill={'blue'} fillOpacity={0.1}/>
+          <rect x={0} y={yScale(box300Y)} width={logScale(300)} height={box300Height} fill={'blue'} fillOpacity={0.1}/>
+
+          <line x1={logScale(minX)} x2={logScale(maxX)} y1={yScale(t1slope)} y2={yScale(t1slope)}
+                stroke="#222"
+                strokeWidth={1.5}
+                strokeOpacity={0.8}
+                strokeDasharray="1,2"
+          />
+
+          {pointData.map((point, i) => (
+            <Circle
+              key={`point-${i}`}
+              className="dot"
+              cx={logScale(pointX(point))}
+              cy={yScale(pointY(point))}
+              r={2}
+              fill={pointC(point)}
+            />
+          ))}
+        </Group>
+      </svg>
+    </div>
+  );
+}
