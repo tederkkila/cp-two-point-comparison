@@ -14,6 +14,7 @@
     "@types/react-icons": "^2.2.7",
     "@visx/axis": "^3.12.0",
     "@visx/brush": "^3.12.0",
+    "@visx/glyph": "^3.12.0",
     "@visx/gradient": "^3.12.0",
     "@visx/grid": "^3.12.0",
     "@visx/group": "^3.12.0",

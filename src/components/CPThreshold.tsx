@@ -4,6 +4,7 @@
 import { Group } from '@visx/group';
 import { curveBasis } from '@visx/curve';
 import { Circle, LinePath } from '@visx/shape';
+import { GlyphDot } from '@visx/glyph'
 import { Threshold } from '@visx/threshold';
 import { scaleLinear, scaleLog, coerceNumber } from '@visx/scale';
 import { AxisLeft, AxisBottom } from '@visx/axis';
@@ -14,7 +15,9 @@ export const background = '#f3f3f3';
 
 const minX: number = 30;
 const maxX: number = 3000;//60*60;
-const logValues = [minX, 60, 3*60, 5*60, 10*60, 20*60, 60*60, maxX];
+const xStep = 10;
+const logValues = [minX, 60, 3 * 60, 5 * 60, 10 * 60, 20 * 60, 60 * 60, maxX];
+const intervals = [60, 120, 180, 300];
 
 interface LinearGraphData {
   testOneShortTime: number;
@@ -51,10 +54,10 @@ const pointC = (d: DataPoint) => d.color;
 const defaultMargin = { top: 40, right: 30, bottom: 50, left: 50 };
 
 const createCPDataLine = (
-  t1slope:number,
-  t1intercept:number,
-  t2slope:number,
-  t2intercept:number,
+  t1slope: number,
+  t1intercept: number,
+  t2slope: number,
+  t2intercept: number,
   minX: number,
   maxX: number,
 ) => {
@@ -63,8 +66,8 @@ const createCPDataLine = (
   //console.log(`Test One: y = ${t1slope} x + ${t1intercept}`);
   //console.log(`Test Two: y = ${t2slope} x + ${t2intercept}`);
 
-  const xStep = 10;
-  const arrayCount = maxX/xStep - minX/xStep + 1;
+
+  const arrayCount = maxX / xStep - minX / xStep + 1;
   return new Array(arrayCount).fill(null).map((_, i) =>
     generateDataRow(i, minX, xStep, t1slope, t1intercept, t2slope, t2intercept)
   );
@@ -101,11 +104,26 @@ const createPointData = (
   const dataPoints: DataPoint[] = [];
   dataPoints.push(generatePointRow(t1x0, t1y0, 'gray'));
   dataPoints.push(generatePointRow(t1x1, t1y1, 'gray'));
-  dataPoints.push(generatePointRow(t2x0, t2y0, 'red'));
-  dataPoints.push(generatePointRow(t2x1, t2y1, 'red'));
+  dataPoints.push(generatePointRow(t2x0, t2y0, 'black'));
+  dataPoints.push(generatePointRow(t2x1, t2y1, 'black'));
 
   return dataPoints
-}
+};
+
+const createIntervalData = (
+  t2slope: number,
+  t2intercept: number,
+): DataPoint[] => {
+
+  const dataPoints: DataPoint[] = [];
+  for ( const i in intervals) {
+    const duration = intervals[i];
+    const intervalColor = 'red';
+    dataPoints.push(generatePointRow(duration, plotCP(duration, t2slope, t2intercept), intervalColor));
+  }
+  return dataPoints
+
+};
 
 const generatePointRow = (
   x: number,
@@ -166,7 +184,14 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
     t1x0, t1x1, t1y0, t1y1, t2x0, t2x1, t2y0, t2y1
   );
 
+  const intervalData = createIntervalData(
+    t2slope, t2intercept
+  );
+
   //console.log(graphData);
+  //console.log(intervalData);
+
+
 
   // scales
   const xScale = scaleLinear<number>({
@@ -187,8 +212,8 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
 
   const logScale = scaleLog<number>({
     domain: getMinMax(logValues),
-    range : [0, width-75],
-    nice: false,
+    range : [0, width - 75],
+    nice  : false,
   });
 
   //console.log(getMinMax(logValues))
@@ -215,6 +240,18 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
 
   // console.log("height: " + height + ' | ' + yScale(height));
   // console.log("0: " + 0 + ' | ' + yScale(0));
+
+  let cpY = yScale(t2slope)
+  let cpDiffHeight = yScale(t1slope) - yScale(t2slope);
+
+  if (t1slope > t2slope) {
+    cpY = yScale(t1slope)
+    cpDiffHeight = yScale(t2slope) - yScale(t1slope);
+  }
+
+  // console.log (yScale(t1slope))
+  // console.log (yScale(t2slope))
+  // console.log(cpDiffHeight);
 
   const cpHeight = yScale(0) - yScale(t2slope);
   //console.log("cpHeight: " + cpHeight);
@@ -288,22 +325,6 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
             stroke="#222"
             strokeWidth={1.5}
           />
-          <line x1={logScale(minX)} x2={logScale(3000)} y1={yScale(t2slope)} y2={yScale(t2slope)}
-                stroke={cpBlockColor}/>
-          <rect x={0} y={yScale(t2slope)} width={logScale(3000)} height={cpHeight} fill={cpBlockColor} fillOpacity={0.2}/>
-          <rect x={0} y={yScale(cp80)} width={logScale(3000)} height={cp80Height} fill={cpBlockColor} fillOpacity={0.2}/>
-
-          <rect x={0} y={yScale(box60Y)} width={logScale(60)} height={box60Height} fill={'blue'} fillOpacity={0.1}/>
-          <rect x={0} y={yScale(box120Y)} width={logScale(120)} height={box120Height} fill={'blue'} fillOpacity={0.1}/>
-          <rect x={0} y={yScale(box180Y)} width={logScale(180)} height={box180Height} fill={'blue'} fillOpacity={0.1}/>
-          <rect x={0} y={yScale(box300Y)} width={logScale(300)} height={box300Height} fill={'blue'} fillOpacity={0.1}/>
-
-          <line x1={logScale(minX)} x2={logScale(maxX)} y1={yScale(t1slope)} y2={yScale(t1slope)}
-                stroke="#222"
-                strokeWidth={1.5}
-                strokeOpacity={0.8}
-                strokeDasharray="1,2"
-          />
 
           {pointData.map((point, i) => (
             <Circle
@@ -315,6 +336,99 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
               fill={pointC(point)}
             />
           ))}
+
+          {/*Current CP Line*/}
+          <line x1={logScale(minX)} x2={logScale(3000)} y1={yScale(t2slope)} y2={yScale(t2slope)}
+                stroke={cpBlockColor}/>
+          <text
+            x={-20}
+            y={yScale(t2slope) + 6}
+            fontSize={12}
+            fill={cpBlockColor}
+            fillOpacity={0.9}
+            fontWeight={600}
+          >CP</text>
+          {/*Fill: Current CP Diff*/}
+          <rect x={0} y={cpY}
+                width={logScale(3000)} height={cpDiffHeight}
+                fill={cpBlockColor} fillOpacity={0.1}/>
+          {/*Fill: Current CP Basic Area*/}
+          <rect x={0} y={yScale(t2slope)} width={logScale(3000)} height={cpHeight} fill={'gray'}
+                fillOpacity={0.1}/>
+          {/*Fill: Current CP 100%*/}
+          <rect x={width-100} y={yScale(t2slope)} width={20} height={cpHeight} fill={'gray'}
+                fillOpacity={0.2}/>
+          {/*Fill: Current CP 80%*/}
+          <rect x={width-100} y={yScale(cp80)} width={20} height={cp80Height} fill={'gray'}
+                fillOpacity={0.2}/>
+          <text
+            x={width-100}
+            y={yScale(cp80) + 12}
+            fontSize={12}
+            fill={'black'}
+            fillOpacity={0.5}
+            fontWeight={400}
+          >80</text>
+          <text
+            x={width-100 + 21}
+            y={yScale(cp80) + 12}
+            fontSize={12}
+            fill={'black'}
+            fillOpacity={0.5}
+            fontWeight={400}
+          >
+            {Math.round(t2slope * 0.80)}
+          </text>
+
+          {/*Previous CP Line*/}
+          <line x1={logScale(minX)} x2={logScale(maxX)} y1={yScale(t1slope)} y2={yScale(t1slope)}
+                stroke="#222"
+                strokeWidth={1.5}
+                strokeOpacity={0.8}
+                strokeDasharray="1,2"
+          />
+          <text
+            x={-43}
+            y={yScale(t1slope) + 6}
+            fontSize={12}
+            fill="#222"
+            fillOpacity={0.2}
+            fontWeight={600}
+          >Old CP</text>
+
+          {/*intervals*/}
+          <rect x={0} y={yScale(box60Y)} width={logScale(60)} height={box60Height} fill={'blue'} fillOpacity={0.1}/>
+          <rect x={0} y={yScale(box120Y)} width={logScale(120)} height={box120Height} fill={'blue'} fillOpacity={0.1}/>
+          <rect x={0} y={yScale(box180Y)} width={logScale(180)} height={box180Height} fill={'blue'} fillOpacity={0.1}/>
+          <rect x={0} y={yScale(box300Y)} width={logScale(300)} height={box300Height} fill={'blue'} fillOpacity={0.1}/>
+
+          {intervalData.map((point, i) => (
+            <GlyphDot
+              key={`ipoint-${i}`}
+              className="dot"
+              cx={logScale(pointX(point))}
+              cy={yScale(pointY(point))}
+              r={2.5}
+              fill="none"
+              stroke={pointC(point)}
+              strokeWidth={1}
+            />
+          ))}
+
+          {intervalData.map((point) => (
+          <text
+            x={logScale(pointX(point)) + 4}
+            y={yScale(pointY(point)) - 1}
+            fontSize={12}
+            fill={'grey'}
+            fillOpacity={0.5}
+            fontWeight={400}
+            >
+            {Math.round(pointY(point))}
+          </text>
+          ))}
+
+
         </Group>
       </svg>
     </div>

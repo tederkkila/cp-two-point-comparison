@@ -214,10 +214,10 @@ export default function LinearThreshold({ width, height, data, margin = defaultM
           <text x="-90" y="15" transform="rotate(-90)" fontSize={10}>
             Energy (kilojoules)
           </text>
-          <text x="40" y="20" style={{ fontWeight: 900 }}>Test One</text>
+          <text x="40" y="20" style={{ fontWeight: 700 }}>Previous Test</text>
           <text x="40" y="35">CP: {Math.round(t1slope*10)/10} W</text>
           <text x="40" y="50">W': {Math.round(t1intercept)} j</text>
-          <text x="165" y="20" style={{ fontWeight: 900 }}>Test Two</text>
+          <text x="165" y="20" style={{ fontWeight: 700 }}>Current Test</text>
           <text x="165" y="35" style={{ fill: test2SlopeColor}}>CP: {Math.round(t2slope*10)/10} W</text>
           <text x="165" y="50" style={{ fill: test2InterceptColor}}>W': {Math.round(t2intercept)} j</text>
           <Threshold<LineDataPoint>

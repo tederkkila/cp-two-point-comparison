@@ -1,3 +1,6 @@
+//TODO add parameters to url for linking
+//TODO update colors for red.green color blindness
+
 import { useState } from 'react'
 // import './App.css'
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
@@ -22,7 +25,7 @@ function App() {
 
   return (
     <main className="flex flex-col p-1">
-      <div className="flex h-20 shrink-0 items-end rounded-lg bg-slate-500 p-4">
+      <div className="flex sm:h-30 h-20 shrink-0 items-end rounded-lg bg-slate-500 p-4">
         <h1 className="text-3xl text-neutral-50">2-Point CP Calculation Comparison</h1>
       </div>
       <div className="mt-2 flex grow flex-col gap-2 md:flex-row">
