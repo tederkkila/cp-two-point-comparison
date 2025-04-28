@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { Dispatch, SetStateAction, useState, useEffect } from "react";
 import Input from "./Input.tsx";
 import { ChangeEvent } from "react";
 import { FieldValues, useForm } from "react-hook-form";
@@ -19,7 +19,7 @@ interface LinearGraphData {
 
 interface SideBarProps {
   linearData: LinearGraphData;
-  setLinearData: any;
+  setLinearData: Dispatch<SetStateAction<LinearGraphData>>;
 }
 
 let linearDataPreCheck: LinearGraphData;
@@ -68,6 +68,16 @@ export default function SideBar({ linearData, setLinearData }: SideBarProps) {
     //console.log(`Input value ${event.target.id} changed to:`, event.target.value);
     const id: string = event.target.id;
     let value: string = event.target.value;
+
+    const valueNumber = parseInt(value, 10);
+
+    if (isNaN(valueNumber)) {
+      reset(linearData);
+      setLinearData(linearData);
+
+      console.log(value);
+      return
+    }
 
     value = (parseInt(value, 10) < minValue) ? minValue.toString() : value;
 
