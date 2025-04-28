@@ -178,15 +178,15 @@ export default function LinearThreshold({ width, height, data, margin = defaultM
   if (width < 10) return null;
 
   // bounds
-  const xMax = width - margin.left - margin.right -20;
+  const xMax = width - margin.left - margin.right - 20;
   const yMax = height - margin.top - margin.bottom;
 
   // update scale output ranges
   xScale.range([0, width - 100]);
   yScale.range([yMax, 0]);
 
-  const colorUnderShade: string =  (t1slope < t2slope) ? 'green' : 'white';
-  const colorOverShade: string =  (t1slope >= t2slope) ? 'red' : 'white';
+  const colorUnderShade: string = (t1slope < t2slope) ? 'green' : 'white';
+  const colorOverShade: string = (t1slope >= t2slope) ? 'red' : 'white';
 
   let test2InterceptColor: string = "#222";
   if (t1intercept < t2intercept) {
@@ -195,31 +195,43 @@ export default function LinearThreshold({ width, height, data, margin = defaultM
     test2InterceptColor = 'red';
   }
   // Function to transform tick values (e.g., add a prefix)
-  const transformTickValues = (value: number) => value/1000;
+  const transformTickValues = (value: number) => value / 1000;
 
   return (
-    <div >
+    <div>
       <svg width={width} height={height}>
         <rect x={0} y={0} width={width} height={height} fill={background} rx={14}/>
         <Group left={margin.left} top={margin.top}>
           <GridRows scale={xScale} width={xMax} height={yMax} stroke="#e0e0e0"/>
           <GridColumns scale={xScale} width={xMax} height={yMax} stroke="#e0e0e0"/>
           <line x1={xMax} x2={xMax} y1={0} y2={yMax} stroke="#e0e0e0"/>
-          <AxisBottom top={yMax} scale={xScale} />
+          <AxisBottom top={yMax} scale={xScale}/>
           <AxisLeft
             scale={yScale}
             // @ts-expect-error tickFormat expect certain format
             tickFormat={transformTickValues}
           />
-          <text x="-90" y="15" transform="rotate(-90)" fontSize={10}>
-            Energy (kilojoules)
-          </text>
+
+          <text x={20} y={-10} fontSize={16} fillOpacity={0.4}>[ linearized two-parameter critical power model ]</text>
+          <text x="-90" y="15" transform="rotate(-90)" fontSize={10}>Energy (kilojoules)</text>
+          <text x={width-200} y={height-100} fontSize={10}>Time (seconds)</text>
+
           <text x="40" y="20" style={{ fontWeight: 700 }}>Previous Test</text>
-          <text x="40" y="35">CP: {Math.round(t1slope*10)/10} W</text>
+          <line x1={25} x2={35} y1={14} y2={14}
+                stroke="#222"
+                strokeWidth={1.5}
+                strokeOpacity={0.8}
+                strokeDasharray="1,2"
+          />
+          <text x="40" y="35">CP: {Math.round(t1slope * 10) / 10} W</text>
           <text x="40" y="50">W': {Math.round(t1intercept)} j</text>
-          <text x="165" y="20" style={{ fontWeight: 700 }}>Current Test</text>
-          <text x="165" y="35" style={{ fill: test2SlopeColor}}>CP: {Math.round(t2slope*10)/10} W</text>
-          <text x="165" y="50" style={{ fill: test2InterceptColor}}>W': {Math.round(t2intercept)} j</text>
+          <text x="168" y="20" style={{ fontWeight: 700 }}>Current Test</text>
+          <line x1={155} x2={166} y1={14} y2={14}
+                stroke={test2SlopeColor}
+                strokeWidth={1.5}
+          />
+          <text x="168" y="35" style={{ fill: test2SlopeColor }}>CP: {Math.round(t2slope * 10) / 10} W</text>
+          <text x="168" y="50" style={{ fill: test2InterceptColor }}>W': {Math.round(t2intercept)} j</text>
           <Threshold<LineDataPoint>
             id={`${Math.random()}`}
             data={graphData}

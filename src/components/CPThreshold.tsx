@@ -285,9 +285,10 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
             orientation={Orientation.bottom}
             scale={logScale}
           />*/}
-          <text x="-70" y="15" transform="rotate(-90)" fontSize={10}>
-            Power (Watts)
-          </text>
+
+          <text x={20} y={-10} fontSize={16} fillOpacity={0.4}>[ resulting hyperbolic power-duration curve (log time axis) ]</text>
+          <text x="-70" y="15" transform="rotate(-90)" fontSize={10}>Power (Watts)</text>
+          <text x={width-200} y={height-100} fontSize={10}>Time (seconds)</text>
 
           <Threshold<LineDataPoint>
             id={`${Math.random()}`}
@@ -418,8 +419,8 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
           {intervalData.map((point, i) => (
           <text
             key={`itext-${i}`}
-            x={logScale(pointX(point)) + 4}
-            y={yScale(pointY(point)) - 1}
+            x={logScale(pointX(point)) + 3}
+            y={yScale(pointY(point)) - 3}
             fontSize={12}
             fill={'grey'}
             fillOpacity={0.5}
