@@ -150,10 +150,10 @@ export default function LinearThreshold({ width, height, data, margin = defaultM
     t1slope, t1intercept, t2slope, t2intercept, maxX
   );
 
-  let test2SlopeColor: string = "#222";
-  if (t1slope < t2slope) {
+  let test2SlopeColor = '#222'
+  if (Math.round(t1slope*10)/10 < Math.round(t2slope*10)/10) {
     test2SlopeColor = 'green';
-  } else if (t1slope > t2slope) {
+  } else if (Math.round(t1slope*10)/10 > Math.round(t2slope*10)/10) {
     test2SlopeColor = 'red';
   }
 
@@ -189,9 +189,9 @@ export default function LinearThreshold({ width, height, data, margin = defaultM
   const colorOverShade: string = (t1slope >= t2slope) ? 'red' : 'white';
 
   let test2InterceptColor: string = "#222";
-  if (t1intercept < t2intercept) {
+  if (Math.round(t1intercept) < Math.round(t2intercept)) {
     test2InterceptColor = 'green';
-  } else if (t1intercept > t2intercept) {
+  } else if (Math.round(t1intercept) > Math.round(t2intercept)) {
     test2InterceptColor = 'red';
   }
   // Function to transform tick values (e.g., add a prefix)

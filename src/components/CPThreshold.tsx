@@ -232,9 +232,9 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
   yScale.range([yMax, 0]);
 
   let cpBlockColor = '#222'
-  if (t1slope < t2slope) {
+  if (Math.round(t1slope*10)/10 < Math.round(t2slope*10)/10) {
     cpBlockColor = 'green';
-  } else if (t1slope > t2slope) {
+  } else if (Math.round(t1slope*10)/10 > Math.round(t2slope*10)/10) {
     cpBlockColor = 'red';
   }
 
@@ -244,7 +244,7 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
   let cpY = yScale(t2slope)
   let cpDiffHeight = yScale(t1slope) - yScale(t2slope);
 
-  if (t1slope > t2slope) {
+  if (Math.round(t1slope*10)/10 > Math.round(t2slope*10)/10) {
     cpY = yScale(t1slope)
     cpDiffHeight = yScale(t2slope) - yScale(t1slope);
   }
