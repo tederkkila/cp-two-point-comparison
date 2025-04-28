@@ -415,8 +415,9 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
             />
           ))}
 
-          {intervalData.map((point) => (
+          {intervalData.map((point, i) => (
           <text
+            key={`itext-${i}`}
             x={logScale(pointX(point)) + 4}
             y={yScale(pointY(point)) - 1}
             fontSize={12}

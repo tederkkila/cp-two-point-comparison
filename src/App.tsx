@@ -10,9 +10,20 @@ import SideBar from "./components/SideBar.tsx";
 
 // import Graphs from "./components/Graphs.tsx";
 
+interface LinearGraphData {
+  testOneShortTime: number;
+  testOneShortWatt: number;
+  testOneLongTime: number;
+  testOneLongWatt: number;
+  testTwoShortTime: number;
+  testTwoShortWatt: number;
+  testTwoLongTime: number;
+  testTwoLongWatt: number;
+}
+
 function App() {
 
-  const [linearData, setLinearData] = useState({
+  const [linearData, setLinearData] = useState<LinearGraphData>({
     testOneShortTime: 180,
     testOneShortWatt: 316,
     testOneLongTime : 600,
@@ -35,7 +46,7 @@ function App() {
 
         </div>
         {/*graphs*/}
-        <div className="flex gap-2 flex-col grow  ">
+        <div className="flex gap-2 flex-col grow">
           <div>
             <ParentSize>{({ width }) =>
               <LinearThreshold width={width} height={300} data={linearData}/>

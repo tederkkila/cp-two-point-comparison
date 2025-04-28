@@ -40,7 +40,9 @@ const Input: React.FC<InputProps> = ({
          ${errors[id]
           ? "border-rose-500 focus:border-rose-500"
           : "border-neutral-300 focus:border-neutral-800"
-        }`}
+        }
+        disabled:text-gray-400 disabled:bg-gray-200 cursor-not-allowed
+        `}
         onChange={handleChange}
         min={min}
       />
