@@ -41,7 +41,7 @@ const Input: React.FC<InputProps> = ({
           ? "border-rose-500 focus:border-rose-500"
           : "border-neutral-300 focus:border-neutral-800"
         }
-        disabled:text-gray-400 disabled:bg-gray-200 cursor-not-allowed
+        disabled:text-gray-400 disabled:bg-gray-200 disabled:cursor-not-allowed
         `}
         onChange={handleChange}
         min={min}
