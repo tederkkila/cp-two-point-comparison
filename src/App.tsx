@@ -36,8 +36,8 @@ function App() {
 
   return (
     <main className="flex flex-col p-1">
-      <div className="flex sm:h-30 h-20 shrink-0 items-end rounded-lg bg-slate-500 p-4">
-        <h1 className="text-3xl text-neutral-50">2-Point CP Calculation Comparison</h1>
+      <div className="flex h-15 shrink-0 items-end rounded-lg bg-slate-500 p-4">
+        <h1 className="text-2xl md:text-3xl text-neutral-50">2-Point CP Calculation Comparison</h1>
       </div>
       <div className="mt-2 flex grow flex-col gap-2 md:flex-row">
         {/*inputs*/}
@@ -49,12 +49,12 @@ function App() {
         <div className="flex gap-2 flex-col grow">
           <div>
             <ParentSize>{({ width }) =>
-              <LinearThreshold width={width} height={300} data={linearData}/>
+              <LinearThreshold width={width} height={250} data={linearData}/>
             }</ParentSize>
           </div>
           <div>
             <ParentSize>{({ width }) =>
-              <CPThreshold width={width} height={500} data={linearData}/>
+              <CPThreshold width={width} height={600} data={linearData}/>
             }</ParentSize>
           </div>
         </div>

@@ -9,6 +9,8 @@ import { Threshold } from '@visx/threshold';
 import { scaleLinear, scaleLog, coerceNumber } from '@visx/scale';
 import { AxisLeft, AxisBottom } from '@visx/axis';
 import { GridRows, GridColumns } from '@visx/grid';
+import { PatternLines } from '@visx/pattern';
+import { LinearGradient } from '@visx/gradient';
 import { calculateIntercept, calculateSlope, plotCP } from "../libs/geometry";
 
 export const background = '#f3f3f3';
@@ -116,7 +118,7 @@ const createIntervalData = (
 ): DataPoint[] => {
 
   const dataPoints: DataPoint[] = [];
-  for ( const i in intervals) {
+  for (const i in intervals) {
     const duration = intervals[i];
     const intervalColor = 'red';
     dataPoints.push(generatePointRow(duration, plotCP(duration, t2slope, t2intercept), intervalColor));
@@ -192,7 +194,6 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
   //console.log(intervalData);
 
 
-
   // scales
   const xScale = scaleLinear<number>({
     domain: [0, maxX],
@@ -232,9 +233,9 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
   yScale.range([yMax, 0]);
 
   let cpBlockColor = '#222'
-  if (Math.round(t1slope*10)/10 < Math.round(t2slope*10)/10) {
+  if (Math.round(t1slope * 10) / 10 < Math.round(t2slope * 10) / 10) {
     cpBlockColor = 'green';
-  } else if (Math.round(t1slope*10)/10 > Math.round(t2slope*10)/10) {
+  } else if (Math.round(t1slope * 10) / 10 > Math.round(t2slope * 10) / 10) {
     cpBlockColor = 'red';
   }
 
@@ -244,7 +245,7 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
   let cpY = yScale(t2slope)
   let cpDiffHeight = yScale(t1slope) - yScale(t2slope);
 
-  if (Math.round(t1slope*10)/10 > Math.round(t2slope*10)/10) {
+  if (Math.round(t1slope * 10) / 10 > Math.round(t2slope * 10) / 10) {
     cpY = yScale(t1slope)
     cpDiffHeight = yScale(t2slope) - yScale(t1slope);
   }
@@ -255,9 +256,31 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
 
   const cpHeight = yScale(0) - yScale(t2slope);
   //console.log("cpHeight: " + cpHeight);
-  const cp80 = t2slope * 0.80;
-  const cp80Height = yScale(0) - yScale(cp80);
+  const cpZ1C = t2slope * 0.80;
+  const cpZ1CHeight = yScale(0) - yScale(cpZ1C);
 
+  const cpZ2 = t2slope * 0.87;
+  const cpZ2Height = yScale(cpZ1C) - yScale(cpZ2);
+
+  const cpZ3A = t2slope * 0.94;
+  const cpZ3AHeight = yScale(cpZ2) - yScale(cpZ3A);
+
+  const cpZ3B = t2slope * 1.01;
+  const cpZ3BHeight = yScale(cpZ3A) - yScale(cpZ3B);
+
+  const cpZ4 = t2slope * 1.05;
+  const cpZ4Height = yScale(cpZ3B) - yScale(cpZ4);
+
+  const cpZ5 = t2slope * 1.16;
+  const cpZ5Height = yScale(cpZ4) - yScale(cpZ5);
+
+  const cpZ6 = t2slope * 1.50;
+  const cpZ6Height = yScale(cpZ5) - yScale(cpZ6);
+
+  //const cpZ7 = 0;
+  const cpZ7Height = yScale(cpZ6);
+
+  // interval boxes
   const box60Y = plotCP(60, t2slope, t2intercept);
   const box60Height = yScale(t2slope) - yScale(box60Y);
 
@@ -286,9 +309,11 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
             scale={logScale}
           />*/}
 
-          <text x={20} y={-10} fontSize={16} fillOpacity={0.4}>[ resulting hyperbolic power-duration curve (log time axis) ]</text>
+          <text x={20} y={-10} fontSize={16} fillOpacity={0.4}>[ resulting hyperbolic power-duration curve (log time
+            axis) ]
+          </text>
           <text x="-70" y="15" transform="rotate(-90)" fontSize={10}>Power (Watts)</text>
-          <text x={width-200} y={height-100} fontSize={10}>Time (seconds)</text>
+          <text x={width - 200} y={height - 100} fontSize={10}>Time (seconds)</text>
 
           <Threshold<LineDataPoint>
             id={`${Math.random()}`}
@@ -348,7 +373,8 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
             fill={cpBlockColor}
             fillOpacity={0.9}
             fontWeight={600}
-          >CP</text>
+          >CP
+          </text>
           {/*Fill: Current CP Diff*/}
           <rect x={0} y={cpY}
                 width={logScale(3000)} height={cpDiffHeight}
@@ -357,29 +383,10 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
           <rect x={0} y={yScale(t2slope)} width={logScale(3000)} height={cpHeight} fill={'gray'}
                 fillOpacity={0.1}/>
           {/*Fill: Current CP 100%*/}
-          <rect x={width-100} y={yScale(t2slope)} width={20} height={cpHeight} fill={'gray'}
-                fillOpacity={0.2}/>
-          {/*Fill: Current CP 80%*/}
-          <rect x={width-100} y={yScale(cp80)} width={20} height={cp80Height} fill={'gray'}
-                fillOpacity={0.2}/>
-          <text
-            x={width-100}
-            y={yScale(cp80) + 12}
-            fontSize={12}
-            fill={'black'}
-            fillOpacity={0.5}
-            fontWeight={400}
-          >80</text>
-          <text
-            x={width-100 + 21}
-            y={yScale(cp80) + 12}
-            fontSize={12}
-            fill={'black'}
-            fillOpacity={0.5}
-            fontWeight={400}
-          >
-            {Math.round(t2slope * 0.80)}
-          </text>
+          {/*<rect x={width - 100} y={yScale(t2slope)} width={20} height={cpHeight} fill={'gray'}*/}
+          {/*      fillOpacity={0.2}/>*/}
+
+
 
           {/*Previous CP Line*/}
           <line x1={logScale(minX)} x2={logScale(maxX)} y1={yScale(t1slope)} y2={yScale(t1slope)}
@@ -395,12 +402,31 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
             fill="#222"
             fillOpacity={0.2}
             fontWeight={600}
-          >Old CP</text>
+          >Old CP
+          </text>
 
           {/*intervals*/}
+          <PatternLines
+            id = "diagonal"
+            height={5}
+            width={5}
+            stroke="blue"
+            strokeWidth={1}
+            orientation={['diagonal']} />
+          <rect x={0} y={yScale(box60Y)} width={logScale(60)} height={box60Height}
+                fill={`url(#diagonal)`} fillOpacity={0.1} stroke={'blue'} strokeOpacity={0.2}/>
           <rect x={0} y={yScale(box60Y)} width={logScale(60)} height={box60Height} fill={'blue'} fillOpacity={0.1}/>
+
+          <rect x={0} y={yScale(box120Y)} width={logScale(120)} height={box120Height}
+                fill={`url(#diagonal)`} fillOpacity={0.08} stroke={'blue'} strokeOpacity={0.15}/>
           <rect x={0} y={yScale(box120Y)} width={logScale(120)} height={box120Height} fill={'blue'} fillOpacity={0.1}/>
+
+          <rect x={0} y={yScale(box180Y)} width={logScale(180)} height={box180Height}
+                fill={`url(#diagonal)`} fillOpacity={0.06} stroke={'blue'} strokeOpacity={0.1}/>
           <rect x={0} y={yScale(box180Y)} width={logScale(180)} height={box180Height} fill={'blue'} fillOpacity={0.1}/>
+
+          <rect x={0} y={yScale(box300Y)} width={logScale(300)} height={box300Height}
+                fill={`url(#diagonal)`} fillOpacity={0.04} stroke={'blue'} strokeOpacity={0.05}/>
           <rect x={0} y={yScale(box300Y)} width={logScale(300)} height={box300Height} fill={'blue'} fillOpacity={0.1}/>
 
           {intervalData.map((point, i) => (
@@ -417,18 +443,122 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
           ))}
 
           {intervalData.map((point, i) => (
-          <text
-            key={`itext-${i}`}
-            x={logScale(pointX(point)) + 3}
-            y={yScale(pointY(point)) - 3}
-            fontSize={12}
-            fill={'grey'}
-            fillOpacity={0.5}
-            fontWeight={400}
+            <text
+              key={`itext-${i}`}
+              x={logScale(pointX(point)) + 3}
+              y={yScale(pointY(point)) - 3}
+              fontSize={12}
+              fill={'grey'}
+              fillOpacity={0.5}
+              fontWeight={400}
             >
-            {Math.round(pointY(point))}
-          </text>
+              {Math.round(pointY(point))}
+            </text>
           ))}
+
+          {/*zones*/}
+          <LinearGradient id="gradient" from={background} to="red" rotate="0" />,
+
+          {/*Fill: Current CP Z1C*/}
+          <rect x={width - 100} y={yScale(cpZ1C)} width={20} height={cpZ1CHeight} fill={'#082f49'}
+                fillOpacity={0.6}/>
+          <text x={width - 100 - 22} y={yScale(cpZ1C) + 12} fontSize={12} fill={'black'} fillOpacity={0.5}
+                fontWeight={400}>Z1
+          </text>
+          <text x={width - 100} y={yScale(cpZ1C) + 12} fontSize={12} fill={'white'} fillOpacity={0.5}
+                fontWeight={400}>80
+          </text>
+          <text x={width - 100 + 22} y={yScale(cpZ1C) + 12} fontSize={12} fill={'black'} fillOpacity={0.5}
+                fontWeight={400}
+          >{Math.round(t2slope * 0.80)}</text>
+
+          {/*Fill: Current CP Z2*/}
+          <rect x={width - 100} y={yScale(cpZ2)} width={20} height={cpZ2Height} fill={'#082f49'}
+                fillOpacity={0.4}/>
+          <text x={width - 100 - 22} y={yScale(cpZ2) + 11} fontSize={12} fill={'black'} fillOpacity={0.5}
+                fontWeight={400}>Z2
+          </text>
+          <text x={width - 100} y={yScale(cpZ2) + 11} fontSize={12} fill={'#082f49'} fillOpacity={0.5}
+                fontWeight={400}>87
+          </text>
+          <text x={width - 100 + 21} y={yScale(cpZ2) + 11} fontSize={12} fill={'black'} fillOpacity={0.5}
+                fontWeight={400}
+          >{Math.round(t2slope * 0.87)}</text>
+
+          {/*Fill: Current CP Z3A*/}
+          <rect x={width - 100} y={yScale(cpZ3A)} width={20} height={cpZ3AHeight} fill={'#082f49'}
+                fillOpacity={0.3}/>
+          <text x={width - 100 - 24} y={yScale(cpZ3A) + 11} fontSize={12} fill={'black'} fillOpacity={0.5}
+                fontWeight={400}>Z3A
+          </text>
+          <text x={width - 100} y={yScale(cpZ3A) + 11} fontSize={12} fill={'#082f49'} fillOpacity={0.5}
+                fontWeight={400}>94
+          </text>
+          <text x={width - 100 + 21} y={yScale(cpZ3A) + 11} fontSize={12} fill={'black'} fillOpacity={0.5}
+                fontWeight={400}
+          >{Math.round(t2slope * 0.94)}</text>
+
+          {/*Fill: Current CP Z3B*/}
+          <rect x={width - 100} y={yScale(cpZ3B)} width={20} height={cpZ3BHeight} fill={'#082f49'}
+                fillOpacity={0.2}/>
+          <text x={width - 100 - 24} y={yScale(cpZ3B) + 12} fontSize={12} fill={'black'} fillOpacity={0.5}
+                fontWeight={400}>Z3B
+          </text>
+          <text x={width - 100} y={yScale(cpZ3B) + 12} fontSize={12} fill={'black'} fillOpacity={0.5}
+                fontWeight={400}>101
+          </text>
+          <text x={width - 100 + 21} y={yScale(cpZ3B) + 12} fontSize={12} fill={'black'} fillOpacity={0.5}
+                fontWeight={400}
+          >{Math.round(t2slope * 1.01)}</text>
+
+          {/*Fill: Current CP Z4*/}
+          <rect x={width - 100} y={yScale(cpZ4)} width={20} height={cpZ4Height} fill={'red'}
+                fillOpacity={0.1}/>
+          <text x={width - 100} y={yScale(cpZ4) + 9} fontSize={12} fill={'black'} fillOpacity={0.5}
+                fontWeight={400}>105
+          </text>
+          <text x={width - 100 + 21} y={yScale(cpZ4) + 9} fontSize={12} fill={'black'} fillOpacity={0.5}
+                fontWeight={400}
+          >{Math.round(t2slope * 1.05)}</text>
+
+          {/*Fill: Current CP Z5*/}
+          <rect x={width - 100} y={yScale(cpZ5)} width={20} height={cpZ5Height} fill={'red'}
+                fillOpacity={0.2}/>
+          <text x={width - 100 - 22} y={yScale(cpZ5) + 10} fontSize={12} fill={'black'} fillOpacity={0.5}
+                fontWeight={400}>Z5
+          </text>
+          <text x={width - 100} y={yScale(cpZ5) + 10} fontSize={12} fill={'red'} fillOpacity={0.5}
+                fontWeight={400}>116
+          </text>
+          <text x={width - 100 + 21} y={yScale(cpZ5) + 10} fontSize={12} fill={'black'} fillOpacity={0.5}
+                fontWeight={400}
+          >{Math.round(t2slope * 1.16)}</text>
+
+          {/*Fill: Current CP Z6*/}
+          <rect x={width - 100} y={yScale(cpZ6)} width={20} height={cpZ6Height} fill={'red'}
+                fillOpacity={0.5}/>
+          <text x={width - 100 - 22} y={yScale(cpZ6) + 10} fontSize={12} fill={'black'} fillOpacity={0.5}
+                fontWeight={400}>Z6
+          </text>
+          <text x={width - 100} y={yScale(cpZ6) + 10} fontSize={12} fill={'white'} fillOpacity={0.5}
+                fontWeight={400}>150
+          </text>
+          <text x={width - 100 + 21} y={yScale(cpZ6) + 10} fontSize={12} fill={'black'} fillOpacity={0.5}
+                fontWeight={400}
+          >{Math.round(t2slope * 1.50)}</text>
+
+          {/*Fill: Current CP Z7*/}
+          <rect x={width - 100} y={0} width={20} height={cpZ7Height}
+                fill={"url(#gradient)"} fillOpacity={0.7}/>
+          <text x={width - 100 - 22} y={yScale(cpZ6)} fontSize={12} fill={'black'} fillOpacity={0.5}
+                fontWeight={400}>Z7
+          </text>
+          {/*<text x={width - 100} y={yScale(cpZ7) + 12} fontSize={12} fill={'black'} fillOpacity={0.5}*/}
+          {/*      fontWeight={400}>150*/}
+          {/*</text>*/}
+          {/*<text x={width - 100 + 21} y={yScale(cpZ7) + 12} fontSize={12} fill={'black'} fillOpacity={0.5}*/}
+          {/*      fontWeight={400}*/}
+          {/*>{Math.round(t2slope * 1.50)}</text>*/}
 
 
         </Group>
