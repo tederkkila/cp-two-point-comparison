@@ -42,6 +42,8 @@ interface DataPoint {
   x: number;
   y: number;
   color: string;
+  text1? : string;
+  text2? : string;
 }
 
 // data accessors
@@ -52,6 +54,8 @@ const t2 = (d: LineDataPoint) => d.t2;
 const pointX = (d: DataPoint) => d.x;
 const pointY = (d: DataPoint) => d.y;
 const pointC = (d: DataPoint) => d.color;
+const pointText1 = (d: DataPoint) => d.text1;
+const pointText2 = (d: DataPoint) => d.text2;
 
 const defaultMargin = { top: 40, right: 30, bottom: 50, left: 50 };
 
@@ -120,8 +124,21 @@ const createIntervalData = (
   const dataPoints: DataPoint[] = [];
   for (const i in intervals) {
     const duration = intervals[i];
+    const minutes = Math.floor(duration / 60);
+    const y = Math.round(plotCP(duration, t2slope, t2intercept));
+    const cpMultiple = Math.round(y/t2slope*100)/100;
     const intervalColor = 'red';
-    dataPoints.push(generatePointRow(duration, plotCP(duration, t2slope, t2intercept), intervalColor));
+    const pointText1 = `${minutes}min@${y} W`;
+    const pointText2 = `(${cpMultiple}CP)`;
+    dataPoints.push(
+      generatePointRow(
+        duration,
+        y,
+        intervalColor,
+        pointText1,
+        pointText2,
+      )
+    );
   }
   return dataPoints
 
@@ -131,11 +148,15 @@ const generatePointRow = (
   x: number,
   y: number,
   color: string,
+  text1?: string,
+  text2?: string,
 ): DataPoint => {
   return {
     x    : x,
     y    : y,
     color: color,
+    text1: text1,
+    text2: text2,
   }
 }
 
@@ -445,14 +466,17 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
           {intervalData.map((point, i) => (
             <text
               key={`itext-${i}`}
-              x={logScale(pointX(point)) + 3}
-              y={yScale(pointY(point)) - 3}
+              x={0}
+              y={yScale(pointY(point)) - 30}
+
               fontSize={12}
               fill={'grey'}
               fillOpacity={0.5}
               fontWeight={400}
             >
-              {Math.round(pointY(point))}
+              <tspan x={logScale(pointX(point)) + 3} dy={'1em'}>{pointText1(point)}</tspan>
+              <tspan x={logScale(pointX(point)) + 3} dy={'1em'}>{pointText2(point)}</tspan>
+
             </text>
           ))}
 

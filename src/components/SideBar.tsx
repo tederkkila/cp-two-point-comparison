@@ -75,7 +75,7 @@ export default function SideBar({ linearData, setLinearData }: SideBarProps) {
       reset(linearData);
       setLinearData(linearData);
 
-      console.log(value);
+      // console.log(value);
       return
     }
 
