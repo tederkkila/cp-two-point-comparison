@@ -2,13 +2,11 @@
 //TODO update colors for red.green color blindness
 
 import { useState } from 'react'
-// import './App.css'
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
 import LinearThreshold from "./components/LinearThreshold.tsx";
 import CPThreshold from "./components/CPThreshold.tsx";
 import SideBar from "./components/SideBar.tsx";
 
-// import Graphs from "./components/Graphs.tsx";
 
 interface LinearGraphData {
   testOneShortTime: number;
@@ -23,7 +21,9 @@ interface LinearGraphData {
 
 function App() {
 
-  const [linearData, setLinearData] = useState<LinearGraphData>({
+  //console.log("running app")
+
+  const defaultLinearData:LinearGraphData = {
     testOneShortTime: 180,
     testOneShortWatt: 316,
     testOneLongTime : 600,
@@ -32,7 +32,9 @@ function App() {
     testTwoShortWatt: 341,
     testTwoLongTime : 600,
     testTwoLongWatt : 287,
-  });
+  }
+
+  const [linearData, setLinearData] = useState<LinearGraphData>(defaultLinearData);
 
   return (
     <main className="flex flex-col p-1">
@@ -42,7 +44,10 @@ function App() {
       <div className="mt-2 flex grow flex-col gap-2 md:flex-row">
         {/*inputs*/}
         <div className="flex flex-col shrink gap-2 rounded-lg bg-gray-50 px-2 py-2 ">
-          <SideBar linearData={linearData} setLinearData={setLinearData}/>
+          <SideBar
+            linearData={linearData}
+            setLinearData={setLinearData}
+          />
 
         </div>
         {/*graphs*/}
