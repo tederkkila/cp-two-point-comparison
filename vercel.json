@@ -1,7 +1,7 @@
 {
   "rewrites": [
-    { "source": "/:testTwoShortTime/:testTwoShortWatt/:testTwoLongTime/:testTwoLongWatt", "destination": "/index.html" },
-    { "source": "/:testTwoShortTime/:testTwoShortWatt/:testTwoLongTime/:testTwoLongWatt/:testOneShortTime/:testOneShortWatt/:testOneLongTime/:testOneLongWatt", "destination": "/index.html" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/:testTwoShortTime/:testTwoShortWatt/:testTwoLongTime/:testTwoLongWatt", "destination": "/" },
+    { "source": "/:testTwoShortTime/:testTwoShortWatt/:testTwoLongTime/:testTwoLongWatt/:testOneShortTime/:testOneShortWatt/:testOneLongTime/:testOneLongWatt", "destination": "/" },
+    { "source": "/(.*)", "destination": "/" }
   ]
 }
