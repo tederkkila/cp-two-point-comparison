@@ -20,10 +20,10 @@ const router = createBrowserRouter([
     path: "/:testTwoShortTime/:testTwoShortWatt/:testTwoLongTime/:testTwoLongWatt/:testOneShortTime/:testOneShortWatt/:testOneLongTime/:testOneLongWatt",
     element: <App />,
   },
-  {
-    path: "*",
-    element: <App />,
-  },
+  // {
+  //   path: "*",
+  //   element: <App />,
+  // },
 ]);
 
 createRoot(document.getElementById('root')!).render(
