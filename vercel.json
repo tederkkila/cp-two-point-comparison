@@ -1,3 +1,7 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/:testTwoShortTime/:testTwoShortWatt/:testTwoLongTime/:testTwoLongWatt", "destination": "/index.html" },
+    { "source": "/:testTwoShortTime/:testTwoShortWatt/:testTwoLongTime/:testTwoLongWatt/:testOneShortTime/:testOneShortWatt/:testOneLongTime/:testOneLongWatt", "destination": "/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
