@@ -12,6 +12,7 @@ import { GridRows, GridColumns } from '@visx/grid';
 import { PatternLines } from '@visx/pattern';
 import { LinearGradient } from '@visx/gradient';
 import { calculateIntercept, calculateSlope, plotCP } from "../libs/geometry";
+import { useState, useEffect } from "react";
 
 export const background = '#f3f3f3';
 
@@ -164,26 +165,46 @@ export type ThresholdProps = {
   width: number;
   height: number;
   data: LinearGraphData;
+  expandZones: boolean;
   margin?: { top: number; right: number; bottom: number; left: number };
 };
 
-export default function CPThreshold({ width, height, data, margin = defaultMargin }: ThresholdProps) {
+export default function CPThreshold({ width, height, data, expandZones, margin = defaultMargin }: ThresholdProps) {
 
-  // const data:LinearGraphData = {
-  //   testOneShortTime: 180,
-  //   testOneShortWatt: 316,
-  //   testOneLongTime : 600,
-  //   testOneLongWatt : 286,
-  //   testTwoShortTime: 180,
-  //   testTwoShortWatt: 341,
-  //   testTwoLongTime : 600,
-  //   testTwoLongWatt : 287,
-  // }
 
   //console.log("Updating CPThreshold");
-  // console.log(data);
+  //console.log(data);
   width = Math.floor(width);
 
+  // bounds
+  const xMax = width - margin.left - margin.right;
+  const yMax = height - margin.top - margin.bottom;
+
+  const defaultZoneWidth = 20;
+  const defaultZoneX = xMax-20;
+
+  const [zoneWidth, setZoneWidth] = useState(defaultZoneWidth);
+  const [zoneX, setZoneX] = useState(defaultZoneX);
+  const [zoneOpacity, setZoneOpacity] = useState(0);
+  const [axisColor, setAxisColor] = useState("#e0e0e0");
+
+  useEffect(() => {
+    console.log(expandZones)
+    if (expandZones) {
+      setZoneWidth(defaultZoneWidth + xMax -20);
+      setZoneX(defaultZoneX - xMax + 20);
+      setZoneOpacity(0.4);
+      setAxisColor("#f1f1f1");
+    } else {
+      setZoneWidth(defaultZoneWidth);
+      setZoneX(defaultZoneX);
+      setZoneOpacity(0);
+      setAxisColor("#e0e0e0");
+    }
+
+  }, [defaultZoneWidth, defaultZoneX, expandZones, xMax])
+
+  if (width < 10) return null;
 
   const t1x0: number = data.testOneShortTime;
   const t1x1: number = data.testOneLongTime;
@@ -241,11 +262,9 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
   //console.log(getMinMax(logValues))
   //console.log(logScale.domain())
 
-  if (width < 10) return null;
 
-  // bounds
-  const xMax = width - margin.left - margin.right;
-  const yMax = height - margin.top - margin.bottom;
+
+
   //console.log("width|margin.left|margin.right", width, margin.left, margin.right);
   //console.log("xMax/yMax", xMax, yMax);
 
@@ -315,16 +334,17 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
   const box300Height = yScale(t2slope) - yScale(box300Y);
 
 
+
   return (
     <div>
       <svg width={width} height={height}>
         <rect x={0} y={0} width={width} height={height} fill={background} rx={14}/>
         <Group left={margin.left} top={margin.top}>
-          <GridRows scale={yScale} width={xMax} height={yMax} stroke="#e0e0e0"/>
+          <GridRows scale={yScale} width={xMax} height={yMax} stroke={axisColor}/>
           <GridColumns scale={logScale} width={xMax} height={yMax} stroke="#e0e0e0"/>
           {/*<line x1={xMax} x2={xMax} y1={0} y2={yMax} stroke="#e0e0e0"/>*/}
           <AxisBottom top={yMax} scale={logScale} numTicks={width > 520 ? 10 : 5}/>
-          <AxisLeft scale={yScale}/>
+          <AxisLeft scale={yScale} />
           {/*<Axis
             orientation={Orientation.bottom}
             scale={logScale}
@@ -481,11 +501,12 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
           ))}
 
           {/*zones*/}
-          <LinearGradient id="gradient" from={background} to="red" rotate="0" />,
 
           {/*Fill: Current CP Z1C*/}
-          <rect x={width - 100} y={yScale(cpZ1C)} width={20} height={cpZ1CHeight} fill={'#082f49'}
-                fillOpacity={0.6}/>
+          <rect x={defaultZoneX} y={yScale(cpZ1C)} width={defaultZoneWidth} height={cpZ1CHeight} fill={'#082f49'}
+                fillOpacity={0.5}/>
+          <rect x={zoneX} y={yScale(cpZ1C)} width={zoneWidth} height={cpZ1CHeight} fill={'#082f49'}
+                fillOpacity={0.8 * zoneOpacity}/>
           <text x={width - 100 - 22} y={yScale(cpZ1C) + 12} fontSize={12} fill={'black'} fillOpacity={0.5}
                 fontWeight={400}>Z1
           </text>
@@ -497,8 +518,10 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
           >{Math.round(t2slope * 0.80)}</text>
 
           {/*Fill: Current CP Z2*/}
-          <rect x={width - 100} y={yScale(cpZ2)} width={20} height={cpZ2Height} fill={'#082f49'}
+          <rect x={defaultZoneX} y={yScale(cpZ2)} width={defaultZoneWidth} height={cpZ2Height} fill={'#082f49'}
                 fillOpacity={0.4}/>
+          <rect x={zoneX} y={yScale(cpZ2)} width={zoneWidth} height={cpZ2Height+1} fill={'#082f49'}
+                fillOpacity={0.5 * zoneOpacity}/>
           <text x={width - 100 - 22} y={yScale(cpZ2) + 11} fontSize={12} fill={'black'} fillOpacity={0.5}
                 fontWeight={400}>Z2
           </text>
@@ -510,8 +533,10 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
           >{Math.round(t2slope * 0.87)}</text>
 
           {/*Fill: Current CP Z3A*/}
-          <rect x={width - 100} y={yScale(cpZ3A)} width={20} height={cpZ3AHeight} fill={'#082f49'}
+          <rect x={defaultZoneX} y={yScale(cpZ3A)} width={defaultZoneWidth} height={cpZ3AHeight} fill={'#082f49'}
                 fillOpacity={0.3}/>
+          <rect x={zoneX} y={yScale(cpZ3A)} width={zoneWidth} height={cpZ3AHeight+1} fill={'#082f49'}
+             fillOpacity={0.4 * zoneOpacity}/>
           <text x={width - 100 - 24} y={yScale(cpZ3A) + 11} fontSize={12} fill={'black'} fillOpacity={0.5}
                 fontWeight={400}>Z3A
           </text>
@@ -523,8 +548,10 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
           >{Math.round(t2slope * 0.94)}</text>
 
           {/*Fill: Current CP Z3B*/}
-          <rect x={width - 100} y={yScale(cpZ3B)} width={20} height={cpZ3BHeight} fill={'#082f49'}
+          <rect x={defaultZoneX} y={yScale(cpZ3B)} width={defaultZoneWidth} height={cpZ3BHeight} fill={'#082f49'}
                 fillOpacity={0.2}/>
+          <rect x={zoneX} y={yScale(cpZ3B)} width={zoneWidth} height={cpZ3BHeight+1} fill={'#082f49'}
+                fillOpacity={0.2 * zoneOpacity}/>
           <text x={width - 100 - 24} y={yScale(cpZ3B) + 12} fontSize={12} fill={'black'} fillOpacity={0.5}
                 fontWeight={400}>Z3B
           </text>
@@ -536,8 +563,10 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
           >{Math.round(t2slope * 1.01)}</text>
 
           {/*Fill: Current CP Z4*/}
-          <rect x={width - 100} y={yScale(cpZ4)} width={20} height={cpZ4Height} fill={'red'}
+          <rect x={defaultZoneX} y={yScale(cpZ4)} width={defaultZoneWidth} height={cpZ4Height} fill={'red'}
                 fillOpacity={0.1}/>
+          <rect x={zoneX} y={yScale(cpZ4)} width={zoneWidth} height={cpZ4Height+1} fill={'red'}
+                fillOpacity={0.1 * zoneOpacity}/>
           <text x={width - 100} y={yScale(cpZ4) + 9} fontSize={12} fill={'black'} fillOpacity={0.5}
                 fontWeight={400}>105
           </text>
@@ -546,8 +575,10 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
           >{Math.round(t2slope * 1.05)}</text>
 
           {/*Fill: Current CP Z5*/}
-          <rect x={width - 100} y={yScale(cpZ5)} width={20} height={cpZ5Height} fill={'red'}
+          <rect x={defaultZoneX} y={yScale(cpZ5)} width={defaultZoneWidth} height={cpZ5Height} fill={'red'}
                 fillOpacity={0.2}/>
+          <rect x={zoneX} y={yScale(cpZ5)} width={zoneWidth} height={cpZ5Height+1} fill={'red'}
+                fillOpacity={0.4 * zoneOpacity}/>
           <text x={width - 100 - 22} y={yScale(cpZ5) + 10} fontSize={12} fill={'black'} fillOpacity={0.5}
                 fontWeight={400}>Z5
           </text>
@@ -559,8 +590,10 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
           >{Math.round(t2slope * 1.16)}</text>
 
           {/*Fill: Current CP Z6*/}
-          <rect x={width - 100} y={yScale(cpZ6)} width={20} height={cpZ6Height} fill={'red'}
+          <rect x={defaultZoneX} y={yScale(cpZ6)} width={defaultZoneWidth} height={cpZ6Height} fill={'red'}
                 fillOpacity={0.5}/>
+          <rect x={zoneX} y={yScale(cpZ6)} width={zoneWidth} height={cpZ6Height+1} fill={'red'}
+                fillOpacity={0.6 * zoneOpacity}/>
           <text x={width - 100 - 22} y={yScale(cpZ6) + 10} fontSize={12} fill={'black'} fillOpacity={0.5}
                 fontWeight={400}>Z6
           </text>
@@ -572,9 +605,14 @@ export default function CPThreshold({ width, height, data, margin = defaultMargi
           >{Math.round(t2slope * 1.50)}</text>
 
           {/*Fill: Current CP Z7*/}
-          <rect x={width - 100} y={0} width={20} height={cpZ7Height}
-                fill={"url(#gradient)"} fillOpacity={0.7}/>
-          <text x={width - 100 - 22} y={yScale(cpZ6)} fontSize={12} fill={'black'} fillOpacity={0.5}
+          <LinearGradient id="gradientRed0" from={background} to="red" rotate="0" />,
+          <LinearGradient id="gradientRed45" from={background} to="red" rotate="-60" />,
+
+          <rect x={defaultZoneX} y={0} width={defaultZoneWidth} height={cpZ7Height}
+                fill={"url(#gradientRed0)"} fillOpacity={0.7}/>
+          <rect x={zoneX} y={0} width={zoneWidth} height={cpZ7Height+1}
+                fill={"url(#gradientRed0)"} fillOpacity={0.85 * zoneOpacity}/>
+          <text x={width - 100 - 22} y={yScale(cpZ6) -2} fontSize={12} fill={'black'} fillOpacity={0.5}
                 fontWeight={400}>Z7
           </text>
           {/*<text x={width - 100} y={yScale(cpZ7) + 12} fontSize={12} fill={'black'} fillOpacity={0.5}*/}

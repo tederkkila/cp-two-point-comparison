@@ -1,2 +1,5 @@
 @import "tailwindcss";
 
+rect {
+    transition:  0.5s;
+}

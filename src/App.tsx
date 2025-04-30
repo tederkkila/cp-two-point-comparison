@@ -35,6 +35,7 @@ function App() {
   }
 
   const [linearData, setLinearData] = useState<LinearGraphData>(defaultLinearData);
+  const [expandZones, setExpandZones] = useState<boolean>(false);
 
   return (
     <main className="flex flex-col p-1">
@@ -47,6 +48,8 @@ function App() {
           <SideBar
             linearData={linearData}
             setLinearData={setLinearData}
+            expandZones={expandZones}
+            setExpandZones={setExpandZones}
           />
 
         </div>
@@ -59,7 +62,7 @@ function App() {
           </div>
           <div>
             <ParentSize>{({ width }) =>
-              <CPThreshold width={width} height={600} data={linearData}/>
+              <CPThreshold width={width} height={600} data={linearData} expandZones={expandZones}/>
             }</ParentSize>
           </div>
         </div>

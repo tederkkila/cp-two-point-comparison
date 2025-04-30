@@ -22,6 +22,8 @@ interface LinearGraphData {
 interface SideBarProps {
   linearData: LinearGraphData;
   setLinearData: Dispatch<SetStateAction<LinearGraphData>>;
+  expandZones: boolean;
+  setExpandZones: Dispatch<SetStateAction<boolean>>;
 }
 
 // for storing legacy values when test one disabled
@@ -29,7 +31,7 @@ let linearDataPreCheck: LinearGraphData;
 // default state is to not disable Test One (show it)
 let disableTestOne: boolean = false;
 
-export default function SideBar({ linearData, setLinearData }: SideBarProps) {
+export default function SideBar({ linearData, setLinearData, expandZones, setExpandZones }: SideBarProps) {
   //console.log("rendering sidebar")
 
   //extract params from route (which gets from the path)
@@ -231,12 +233,37 @@ export default function SideBar({ linearData, setLinearData }: SideBarProps) {
     }
   }
 
+  const handleZoneSwitchChange = (
+    checked: boolean,
+  )=> {
+    setExpandZones(checked);
+  }
+
   return (
     <>
       <h2 className="text-2xl font-bold text-slate-800">PARAMETERS</h2>
+
       <hr className="border-2 border-neutral-500"/>
+
+      <div className="flex">
+        <div className="flex flex-col grow">
+          <h3 className="flex text-lg font-light text-slate-600">Expand Zones</h3>
+        </div>
+        <div className="flex flex-col justify-end">
+          <Switch.Root id="zoneToggle" name="zoneToggle"
+                 checked={expandZones} className={styles.Switch}
+                 onCheckedChange={handleZoneSwitchChange}>
+            <Switch.Thumb className={styles.Thumb}/>
+          </Switch.Root>
+        </div>
+      </div>
+
+      <hr className="border-2 border-neutral-500"/>
+
       <h3 className="text-lg font-light text-slate-600">Current Test</h3>
+
       <hr className="border-1 border-neutral-200"/>
+
       <h4>Short Duration</h4>
       <Input
         id="testTwoShortTime"
