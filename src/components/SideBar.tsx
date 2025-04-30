@@ -61,10 +61,14 @@ export default function SideBar({ linearData, setLinearData }: SideBarProps) {
       disableTestOne = true;
     }
 
-    setLinearData ({
+    linearData = {
       ...linearData,
       ...paramData,
-    });
+    };
+    //console.log(linearData)
+    reset(linearData);
+    setLinearData(linearData);
+    //console.log(linearData)
 
   }, []);
 
@@ -81,6 +85,7 @@ export default function SideBar({ linearData, setLinearData }: SideBarProps) {
   const [t1SWDisabled, sett1SWDisabled] = useState<boolean>(false);
   const [t1LTDisabled, sett1LTDisabled] = useState<boolean>(false);
   const [t1LWDisabled, sett1LWDisabled] = useState<boolean>(false);
+
 
   const {
     register, setValue, formState: { errors }, reset,
