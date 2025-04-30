@@ -1,7 +1,5 @@
 {
   "rewrites": [
-    { "source": "/:testTwoShortTime/:testTwoShortWatt/:testTwoLongTime/:testTwoLongWatt", "destination": "/" },
-    { "source": "/:testTwoShortTime/:testTwoShortWatt/:testTwoLongTime/:testTwoLongWatt/:testOneShortTime/:testOneShortWatt/:testOneLongTime/:testOneLongWatt", "destination": "/" },
-    { "source": "/(.*)", "destination": "/" }
+    { "source": "/[.]+", "destination": "/", "statusCode": 200 }
   ]
 }
