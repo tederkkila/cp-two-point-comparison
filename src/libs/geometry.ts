@@ -25,3 +25,39 @@ export const calculateIntercept = (
 ): number => {
   return y0 - (slope * x0);
 }
+
+export const plotFRC = (
+  t: number,
+  FRC : number,
+  Pmax : number,
+) => {
+
+  return FRC/t * (1 - Math.exp(-1 * t / (FRC/Pmax)))
+}
+
+export const plotFTP = (
+  t: number,
+  FTP : number,
+  tau2 : number,
+) => {
+  // console.log("FTP: " + t, FTP, tau2)
+  //console.log(tau2)
+  return FTP * (1-Math.exp(-1 * t / tau2))
+}
+
+export const plotTTE = (
+  t: number,
+  TTE:  number,
+  a : number,
+) => {
+
+  let y : number;
+
+  if (t >= TTE) {
+    y = a * Math.log(t/TTE)
+  } else {
+    y = 0;
+  }
+  return y
+}
+

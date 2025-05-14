@@ -5,8 +5,7 @@ import { FieldValues, useForm } from "react-hook-form";
 import { useDebouncedCallback } from "use-debounce";
 import { Switch } from '@base-ui-components/react/switch';
 import styles from './index.module.css';
-import { useNavigate } from 'react-router-dom';
-import {useParams} from "react-router-dom";
+import { useNavigate, useParams } from 'react-router-dom';
 
 interface LinearGraphData {
   testOneShortTime: number;

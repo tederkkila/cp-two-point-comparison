@@ -503,9 +503,9 @@ export default function CPThreshold({ width, height, data, expandZones, margin =
           {/*zones*/}
 
           {/*Fill: Current CP Z1C*/}
-          <rect x={defaultZoneX} y={yScale(cpZ1C)} width={defaultZoneWidth} height={cpZ1CHeight} fill={'#082f49'}
+          <rect className="smooth" x={defaultZoneX} y={yScale(cpZ1C)} width={defaultZoneWidth} height={cpZ1CHeight} fill={'#082f49'}
                 fillOpacity={0.5}/>
-          <rect x={zoneX} y={yScale(cpZ1C)} width={zoneWidth} height={cpZ1CHeight} fill={'#082f49'}
+          <rect className="smooth" x={zoneX} y={yScale(cpZ1C)} width={zoneWidth} height={cpZ1CHeight} fill={'#082f49'}
                 fillOpacity={0.8 * zoneOpacity}/>
           <text x={width - 100 - 22} y={yScale(cpZ1C) + 12} fontSize={12} fill={'black'} fillOpacity={0.5}
                 fontWeight={400}>Z1
@@ -518,9 +518,9 @@ export default function CPThreshold({ width, height, data, expandZones, margin =
           >{Math.round(t2slope * 0.80)}</text>
 
           {/*Fill: Current CP Z2*/}
-          <rect x={defaultZoneX} y={yScale(cpZ2)} width={defaultZoneWidth} height={cpZ2Height} fill={'#082f49'}
+          <rect className="smooth" x={defaultZoneX} y={yScale(cpZ2)} width={defaultZoneWidth} height={cpZ2Height} fill={'#082f49'}
                 fillOpacity={0.4}/>
-          <rect x={zoneX} y={yScale(cpZ2)} width={zoneWidth} height={cpZ2Height+1} fill={'#082f49'}
+          <rect className="smooth" x={zoneX} y={yScale(cpZ2)} width={zoneWidth} height={cpZ2Height+1} fill={'#082f49'}
                 fillOpacity={0.5 * zoneOpacity}/>
           <text x={width - 100 - 22} y={yScale(cpZ2) + 11} fontSize={12} fill={'black'} fillOpacity={0.5}
                 fontWeight={400}>Z2
@@ -533,9 +533,9 @@ export default function CPThreshold({ width, height, data, expandZones, margin =
           >{Math.round(t2slope * 0.87)}</text>
 
           {/*Fill: Current CP Z3A*/}
-          <rect x={defaultZoneX} y={yScale(cpZ3A)} width={defaultZoneWidth} height={cpZ3AHeight} fill={'#082f49'}
+          <rect className="smooth" x={defaultZoneX} y={yScale(cpZ3A)} width={defaultZoneWidth} height={cpZ3AHeight} fill={'#082f49'}
                 fillOpacity={0.3}/>
-          <rect x={zoneX} y={yScale(cpZ3A)} width={zoneWidth} height={cpZ3AHeight+1} fill={'#082f49'}
+          <rect className="smooth" x={zoneX} y={yScale(cpZ3A)} width={zoneWidth} height={cpZ3AHeight+1} fill={'#082f49'}
              fillOpacity={0.4 * zoneOpacity}/>
           <text x={width - 100 - 24} y={yScale(cpZ3A) + 11} fontSize={12} fill={'black'} fillOpacity={0.5}
                 fontWeight={400}>Z3A
@@ -548,9 +548,9 @@ export default function CPThreshold({ width, height, data, expandZones, margin =
           >{Math.round(t2slope * 0.94)}</text>
 
           {/*Fill: Current CP Z3B*/}
-          <rect x={defaultZoneX} y={yScale(cpZ3B)} width={defaultZoneWidth} height={cpZ3BHeight} fill={'#082f49'}
+          <rect className="smooth" x={defaultZoneX} y={yScale(cpZ3B)} width={defaultZoneWidth} height={cpZ3BHeight} fill={'#082f49'}
                 fillOpacity={0.2}/>
-          <rect x={zoneX} y={yScale(cpZ3B)} width={zoneWidth} height={cpZ3BHeight+1} fill={'#082f49'}
+          <rect className="smooth" x={zoneX} y={yScale(cpZ3B)} width={zoneWidth} height={cpZ3BHeight+1} fill={'#082f49'}
                 fillOpacity={0.2 * zoneOpacity}/>
           <text x={width - 100 - 24} y={yScale(cpZ3B) + 12} fontSize={12} fill={'black'} fillOpacity={0.5}
                 fontWeight={400}>Z3B
@@ -563,9 +563,9 @@ export default function CPThreshold({ width, height, data, expandZones, margin =
           >{Math.round(t2slope * 1.01)}</text>
 
           {/*Fill: Current CP Z4*/}
-          <rect x={defaultZoneX} y={yScale(cpZ4)} width={defaultZoneWidth} height={cpZ4Height} fill={'red'}
+          <rect className="smooth" x={defaultZoneX} y={yScale(cpZ4)} width={defaultZoneWidth} height={cpZ4Height} fill={'red'}
                 fillOpacity={0.1}/>
-          <rect x={zoneX} y={yScale(cpZ4)} width={zoneWidth} height={cpZ4Height+1} fill={'red'}
+          <rect className="smooth" x={zoneX} y={yScale(cpZ4)} width={zoneWidth} height={cpZ4Height+1} fill={'red'}
                 fillOpacity={0.1 * zoneOpacity}/>
           <text x={width - 100} y={yScale(cpZ4) + 9} fontSize={12} fill={'black'} fillOpacity={0.5}
                 fontWeight={400}>105
@@ -575,9 +575,9 @@ export default function CPThreshold({ width, height, data, expandZones, margin =
           >{Math.round(t2slope * 1.05)}</text>
 
           {/*Fill: Current CP Z5*/}
-          <rect x={defaultZoneX} y={yScale(cpZ5)} width={defaultZoneWidth} height={cpZ5Height} fill={'red'}
+          <rect className="smooth" x={defaultZoneX} y={yScale(cpZ5)} width={defaultZoneWidth} height={cpZ5Height} fill={'red'}
                 fillOpacity={0.2}/>
-          <rect x={zoneX} y={yScale(cpZ5)} width={zoneWidth} height={cpZ5Height+1} fill={'red'}
+          <rect className="smooth" x={zoneX} y={yScale(cpZ5)} width={zoneWidth} height={cpZ5Height+1} fill={'red'}
                 fillOpacity={0.4 * zoneOpacity}/>
           <text x={width - 100 - 22} y={yScale(cpZ5) + 10} fontSize={12} fill={'black'} fillOpacity={0.5}
                 fontWeight={400}>Z5
@@ -590,9 +590,9 @@ export default function CPThreshold({ width, height, data, expandZones, margin =
           >{Math.round(t2slope * 1.16)}</text>
 
           {/*Fill: Current CP Z6*/}
-          <rect x={defaultZoneX} y={yScale(cpZ6)} width={defaultZoneWidth} height={cpZ6Height} fill={'red'}
+          <rect className="smooth" x={defaultZoneX} y={yScale(cpZ6)} width={defaultZoneWidth} height={cpZ6Height} fill={'red'}
                 fillOpacity={0.5}/>
-          <rect x={zoneX} y={yScale(cpZ6)} width={zoneWidth} height={cpZ6Height+1} fill={'red'}
+          <rect className="smooth" x={zoneX} y={yScale(cpZ6)} width={zoneWidth} height={cpZ6Height+1} fill={'red'}
                 fillOpacity={0.6 * zoneOpacity}/>
           <text x={width - 100 - 22} y={yScale(cpZ6) + 10} fontSize={12} fill={'black'} fillOpacity={0.5}
                 fontWeight={400}>Z6
@@ -608,9 +608,9 @@ export default function CPThreshold({ width, height, data, expandZones, margin =
           <LinearGradient id="gradientRed0" from={background} to="red" rotate="0" />,
           <LinearGradient id="gradientRed45" from={background} to="red" rotate="-60" />,
 
-          <rect x={defaultZoneX} y={0} width={defaultZoneWidth} height={cpZ7Height}
+          <rect className="smooth" x={defaultZoneX} y={0} width={defaultZoneWidth} height={cpZ7Height}
                 fill={"url(#gradientRed0)"} fillOpacity={0.7}/>
-          <rect x={zoneX} y={0} width={zoneWidth} height={cpZ7Height+1}
+          <rect className="smooth" x={zoneX} y={0} width={zoneWidth} height={cpZ7Height+1}
                 fill={"url(#gradientRed0)"} fillOpacity={0.85 * zoneOpacity}/>
           <text x={width - 100 - 22} y={yScale(cpZ6) -2} fontSize={12} fill={'black'} fillOpacity={0.5}
                 fontWeight={400}>Z7

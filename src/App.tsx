@@ -1,4 +1,3 @@
-//TODO add parameters to url for linking
 //TODO update colors for red.green color blindness
 
 import { useState } from 'react'
