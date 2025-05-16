@@ -5,92 +5,129 @@ import { MMPDataPoint, PTSolution } from "./types/interfaces.ts"
 import PTSideBar from "./components/PTSidebar.tsx";
 import DistanceScenarios from "./components/DistanceScenarios.tsx";
 
+
+
+const defaultMMPData: MMPDataPoint[] = [
+  { time: 5, power: 1117 },
+  { time: 60, power: 684 },
+  { time: 300, power: 435 },
+  // { time: 720, power: 369},
+  { time: 1200, power: 365 },
+  { time: 2400, power: 343 },
+  { time: 3600, power: 332 },
+  { time: 7200, power: 323 },
+  { time: 10800, power: 311 },
+]
+
+const henryMMPDataA: MMPDataPoint[] = [
+  { time: 180, power: 449 },
+  { time: 727, power: 384 },
+  { time: 7560, power: 340 },
+]
+
+const henryMMPDataB: MMPDataPoint[] = [
+  { time: 180, power: 455 },
+  { time: 1094, power: 386 },
+]
+
+const henryMMPDataC: MMPDataPoint[] = [
+  // { time: 30, power: 830 },
+  // { time: 60, power: 644 },
+  { time: 180, power: 455 },
+  { time: 1094, power: 386 },
+  { time: 180, power: 449 },
+  { time: 727, power: 384 },
+  { time: 7560, power: 340 },
+]
+
+const tedMMPData: MMPDataPoint[] = [
+  // { time: 20, power: 700 },
+  { time: 60, power: 480 },
+  { time: 180, power: 375 },
+  { time: 391, power: 331 },
+  { time: 21*60+49, power: 309 },
+  { time: 45*60+41, power: 296 },
+  { time: 3600+42*60+4, power: 280 },
+  { time: 3*3600+40*60+50, power: 261 },
+]
+
+const asyaMMPData: MMPDataPoint[] = [
+  { time: 120, power: 220 + 30 }, //underperformed
+  { time: 1231, power: 192 },
+  { time: 60*68+6, power: 174 },
+  { time: 120*60+24*60+13, power: 165 },
+]
+
+const magnusMMPData: MMPDataPoint[] = [
+  { time: 181, power: 457+28 },
+  { time: 720, power: 408+9 },
+  { time: 60*39+49, power: 383 },
+  { time: 3*60*60 + 12*60 + 49, power: 339 },
+]
+const dimasAMMPData: MMPDataPoint[] = [
+  //{ time: 180, power: 315 +10, distance: 724 }, //Oct 2, 2024
+  //{ time: 600, power: 284, distance: 2120 }, //Oct 2, 2024
+  { time: 175, power: 319 +9, distance: 710 }, //Oct 2, 2024
+  { time: 600, power: 284, distance: 2090 }, //Oct 2, 2024
+  { time: 1*60*60 + 53*60 + 46, power: 256, distance: 21480 }, //Oct 13, 2024
+]
+const dimasBMMPData: MMPDataPoint[] = [
+  //{ time: 179, power: 309, distance: 630 }, //May 6, 2025
+  { time: 159 + 21, power: 315 + 5 + 8, distance: 696 }, //May 6, 2025
+  //{ time: 719, power: 279, distance: 2530 }, //May 6, 2025
+  { time: 696, power: 283, distance: 2470 }, //May 6, 2025
+  //{ time: 180, power: 311, distance: 718 }, //April 10, 2025
+  //{ time: 721, power: 272, distance: 2460 }, //April 10, 2025
+]
+
+const datasets = {
+  default: {data: defaultMMPData, kg:75},
+  henryA: {data: henryMMPDataA, kg:75},
+  henryB: {data: henryMMPDataB, kg:75},
+  henryC: {data: henryMMPDataC, kg:75},
+  ted: {data: tedMMPData, kg:78},
+  asya: {data: asyaMMPData, kg:65},
+  magnus: {data: magnusMMPData, kg:88},
+  dimasA: {data: dimasAMMPData, kg:77},
+  dimasB: {data: dimasBMMPData, kg:77},
+}
+
+const initialParamsDefault: PTSolution = {
+  FRC : 5000,
+  Pmax : 600,
+  FTP : 200,
+  tau2 : 12.8,
+  TTE: 420,
+  a : 16.9,
+};
+
+const distanceMeters = {
+  fiveK: 5000,
+  tenK: 10000,
+  halfMarathon: 21097.5,
+  fullMarathon: 42195
+};
+
 function PTApp() {
 
-  //console.log("running ptapp")
+  const currentDataset = datasets.dimasA
+  const [mmpData, setMMPData] = useState<MMPDataPoint[]>(currentDataset.data);
 
-  const defaultMMPData: MMPDataPoint[] = [
-    { time: 5, power: 1117 },
-    { time: 60, power: 684 },
-    { time: 300, power: 435 },
-    // { time: 720, power: 369},
-    { time: 1200, power: 365 },
-    { time: 2400, power: 343 },
-    { time: 3600, power: 332 },
-    { time: 7200, power: 323 },
-    { time: 10800, power: 311 },
-  ]
+  const kg: number = currentDataset.kg;
+  const reRun = currentDataset.data[2];
 
-  const henryMMPDataA: MMPDataPoint[] = [
-    { time: 180, power: 449 },
-    { time: 727, power: 384 },
-    { time: 7560, power: 340 },
-  ]
-
-  const henryMMPDataB: MMPDataPoint[] = [
-    { time: 180, power: 455 },
-    { time: 1094, power: 386 },
-  ]
-
-  const henryMMPDataC: MMPDataPoint[] = [
-    // { time: 30, power: 830 },
-    // { time: 60, power: 644 },
-    { time: 180, power: 455 },
-    { time: 1094, power: 386 },
-    { time: 180, power: 449 },
-    { time: 727, power: 384 },
-    { time: 7560, power: 340 },
-  ]
-
-  const tedMMPData: MMPDataPoint[] = [
-    // { time: 20, power: 700 },
-    { time: 60, power: 520 },
-    { time: 180, power: 375 },
-    { time: 391, power: 331 },
-    { time: 21*60+49, power: 309 },
-    { time: 45*60+41, power: 296 },
-    { time: 3600+42*60+4, power: 280 },
-    { time: 3*3600+40*60+50, power: 261 },
-  ]
-
-  const asyaMMPData: MMPDataPoint[] = [
-    { time: 120, power: 220 + 30 }, //underperformed
-    { time: 1231, power: 192 },
-    { time: 60*68+6, power: 174 },
-    { time: 120*60+24*60+13, power: 165 },
-  ]
-
-  const magnusMMPData: MMPDataPoint[] = [
-    { time: 181, power: 457+20 },
-    { time: 720, power: 408 },
-    { time: 60*39+49, power: 383 },
-  ]
-
-  const datasets = {
-    defaultMMPData: defaultMMPData,
-    henryMMPDataA: henryMMPDataA,
-    henryMMPDataB: henryMMPDataB,
-    henryMMPDataC: henryMMPDataC,
-    tedMMPData: tedMMPData,
-    asyaMMPData: asyaMMPData,
-    magnusMMPData: magnusMMPData,
+  let re = 0.95;
+  if (currentDataset.data[2] && currentDataset.data[2].distance) {
+    re = Math.round(currentDataset.data[2].distance / (reRun.time) / (reRun.power/kg)*100)/100;
+  } else {
+    re = 0.95;
   }
-
-  const [mmpData, setMMPData] = useState<MMPDataPoint[]>(datasets.asyaMMPData);
-  //const mmpData: MMPDataPoint[] = datasets.asyaMMPData;
-  //console.log("PTApp|mmpData", mmpData);
-
-  const initialParamsDefault: PTSolution = {
-    FRC : 5000,
-    Pmax : 600,
-    FTP : 200,
-    tau2 : 12.8,
-    TTE: 420,
-    a : 16.9,
-  };
+console.log("re", re)
 
   const initialParams = initialParamsDefault;
   //console.log("PTApp|initialParams",initialParams);
+
+  const [ptSolution, setPTSolution] = useState<PTSolution | null >(null);
 
   return (
     <main className="flex flex-col p-1">
@@ -105,14 +142,20 @@ function PTApp() {
         {/*graphs*/}
         <div className="flex gap-2 flex-col grow w-full">
 
+          { ptSolution ? (
           <div>
             <ParentSize>{({ width }) =>
               <DistanceScenarios
                 width={width}
                 height={250}
+                ptSolution={ptSolution}
+                distance={distanceMeters.halfMarathon}
+                kg={kg}
+                re={re}
               />
             }</ParentSize>
           </div>
+            ) : null}
 
           <div>
             <ParentSize>{({ width }) =>
@@ -121,6 +164,7 @@ function PTApp() {
                 height={500}
                 mmpData={mmpData}
                 initialParams={initialParams}
+                setPTSolution={setPTSolution}
               />
             }</ParentSize>
           </div>

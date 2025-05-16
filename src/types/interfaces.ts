@@ -1,7 +1,9 @@
+import { Dispatch, SetStateAction } from "react";
 
-export interface MMPDataPoint extends Record<string, number> {
+export interface MMPDataPoint extends Record<string, number|undefined> {
   time: number;
   power: number;
+  distance?: number;
 }
 
 export interface PTLinePoint {
@@ -28,6 +30,7 @@ export interface PTSolution {
   tau2 : number;
   TTE: number;
   a : number;
+  kg?: number;
 }
 
 export type PTEstimationProps = {
@@ -35,12 +38,17 @@ export type PTEstimationProps = {
   height: number;
   mmpData: MMPDataPoint[];
   initialParams: PTSolution;
+  setPTSolution: Dispatch<SetStateAction<PTSolution | null>>;
   margin?: { top: number; right: number; bottom: number; left: number };
 }
 
 export type DistanceScenariosProps = {
   width: number;
   height: number;
+  ptSolution: PTSolution;
+  distance: number;
+  kg: number;
+  re: number;
   margin?: { top: number; right: number; bottom: number; left: number };
 }
 
@@ -52,4 +60,13 @@ export interface CPSolution {
 export interface CPLinePoint {
   x: number;
   y: number;
+}
+
+export interface Scenario {
+  title: string;
+  RE: number;
+  a: number;
+  RE0: number;
+  RE1: number;
+  RE2: number;
 }

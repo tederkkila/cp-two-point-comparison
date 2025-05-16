@@ -1,4 +1,4 @@
-import {useMemo} from "react";
+import { useEffect, useMemo } from "react";
 import {
   CPLinePoint, CPSolution,
   DataPoint,
@@ -160,7 +160,7 @@ let currentParams: PTSolution = {
   a : 0,
 };
 
-export default function PTEstimation({ width, height, mmpData, initialParams, margin = defaultMargin }: PTEstimationProps) {
+export default function PTEstimation({ width, height, mmpData, initialParams, setPTSolution, margin = defaultMargin }: PTEstimationProps) {
 
   //console.log("PTEstimation|mmpData",mmpData);
   //console.log("PTEstimation|initialParams",initialParams);
@@ -225,12 +225,12 @@ export default function PTEstimation({ width, height, mmpData, initialParams, ma
     const learningDecay: number = 0.9998;
     const minMSEDelta: number = 0.000001;
     const parameterBounds = {
-      FRC : [5000, 35000],
+      FRC : [4000, 35000],
       Pmax : [300, 1500],
       FTP : [100, 700],
       tau2 : [12, 13],
       TTE: [180, 1200],
-      a : [5, 20],
+      a : [8, 20],
     };
     const learningRate: PTSolution = {
       FRC : 500,
@@ -262,9 +262,10 @@ export default function PTEstimation({ width, height, mmpData, initialParams, ma
   const finalIterations = optimizationSolution.iterations;
   const optimizedParams = optimizationSolution.params
 
+
   const ptCurveData = generatePTCurveData(optimizedParams);
   const ptCurveDataCleanTTE: PTLinePoint[] = ptCurveData.filter((d) => d.tte !== 0 );
-  console.log(ptCurveDataCleanTTE)
+  //console.log(ptCurveDataCleanTTE)
   const ptPointData = createPTPointData(mmpData);
 
   const areaKeys = ['frc', 'ftpX', 'tte'];
@@ -296,6 +297,11 @@ export default function PTEstimation({ width, height, mmpData, initialParams, ma
   });
 
   yScale.range([yMax, 0]);
+
+  useEffect(() => {
+    setPTSolution (optimizedParams)
+  }, [setPTSolution, optimizedParams]);
+
 
 
   return width < 10 ? null : (
