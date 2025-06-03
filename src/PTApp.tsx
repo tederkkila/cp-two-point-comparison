@@ -105,11 +105,11 @@ const vanhataloMMPData: MMPDataPoint[] = [
   { time: 685, power: 360,},
 ]
 const yiqiaoMMPData: MMPDataPoint[] = [
-  { time: 5, power: 536,},
-  { time: 60, power: 453,},
-  { time: 180, power: 342,},
-  { time: 300, power: 322,},
-  { time: 19*60 + 34, power: 333, distance: 4910},
+  { time: 5, power: 695,},
+  { time: 60, power: 504,},
+  { time: 180, power: 405,},
+  { time: 300, power: 370,},
+  { time: 19*60 + 34, power: 341, distance: 4910},
   { time: 35*60 + 25, power: 335, distance: 10090},
   { time: 60*60, power: 272, },
 

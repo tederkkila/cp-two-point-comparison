@@ -158,17 +158,12 @@ export const numericalGradientPT = (
   for (j in params) {
 
     const initialValue = params[j];
-    if (initialValue) {
-      params[j] = initialValue + delta;
-      const lossPlusDelta: number = loss(params, data);
-      params[j] = initialValue - delta;
-      const lossMinusDelta: number = loss(params, data);
-
-      grad[j] = (lossPlusDelta - lossMinusDelta) / (2 * delta);
-      params[j] = initialValue;
-    } else {
-      console.log("initialValue is not defined")
-    }
+    params[j] = initialValue + delta;
+    const lossPlusDelta: number = loss(params, data);
+    params[j] = initialValue - delta;
+    const lossMinusDelta: number = loss(params, data);
+    grad[j] = (lossPlusDelta - lossMinusDelta) / (2 * delta);
+    params[j] = initialValue;
     //console.log(j, delta, lossPlusDelta, lossMinusDelta, grad[j] );
   }
 

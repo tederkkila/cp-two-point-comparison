@@ -13,6 +13,7 @@ interface InputProps {
   errors: FieldErrors;
   handleChange: (event: ChangeEvent<HTMLInputElement>) => void;
   min: number;
+  placeholder?: string;
 }
 
 const Input: React.FC<InputProps> = ({
@@ -25,6 +26,7 @@ const Input: React.FC<InputProps> = ({
   errors,
   handleChange,
   min,
+  placeholder,
 }) => {
   return (
     <div className="w-full relative">
@@ -32,7 +34,7 @@ const Input: React.FC<InputProps> = ({
         id={id}
         disabled={disabled}
         {...register(id, { required })}
-        placeholder=" "
+        placeholder={placeholder}
         type={type}
         className={`
         text-xl

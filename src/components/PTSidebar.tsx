@@ -105,6 +105,7 @@ export default function PTSidebar ({mmpData, setMMPData}:PTSideBarProps)  {
                   required
                   handleChange={handleInputChange}
                   min={minValue}
+                  placeholder={item.time.toString()}
                 />
                 <Input
                   id={`power-${index}`}
