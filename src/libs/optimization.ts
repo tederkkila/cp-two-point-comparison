@@ -1,37 +1,14 @@
-import { plotFRC, plotFTP, plotTTE } from "./geometry.ts";
+import { pt_model } from "./calculations_pt.ts";
+import { extended_model } from "./calculations_extended.ts";
 import {
+  ExtendedSolution,
   MMPDataPoint,
   PTSolution
 } from "../types/interfaces.ts"
 
-export const pt_model = (
-  t: number,
-  ptSolution: PTSolution
-)=> {
 
-  const frc: number = plotFRC(
-    t,
-    ptSolution.FRC,
-    ptSolution.Pmax,
-  );
 
-  const ftp: number = plotFTP(
-    t,
-    ptSolution.FTP,
-    ptSolution.tau2,);
-
-  const tte: number = plotTTE(
-    t,
-    ptSolution.TTE,
-    ptSolution.a,
-  );
-
-  //console.log(ptSolution.FTP, ptSolution.tau2)
-  //console.log(t, frc, ftp, tte)
-  return frc + ftp - tte;
-}
-
-export const loss = (
+export const lossPT = (
     params: PTSolution,
     data: MMPDataPoint[],
 ): number => {
@@ -46,8 +23,23 @@ export const loss = (
   return mse;
 }
 
+export const lossExtended = (
+  params: ExtendedSolution,
+  data: MMPDataPoint[],
+): number => {
+  let mse: number = 0;
+
+  for (let i: number = 0; i < data.length; i++) {
+    const predicted = extended_model(data[i].time, params);
+    mse += Math.pow(predicted - data[i].power, 2);
+  }
+  //console.log(mse);
+  //return mse / data.length;
+  return mse;
+}
+
 // Example using a simple gradient descent
-export const gradientDescent = (
+export const gradientDescentPT = (
   loss: (
     initialParams : PTSolution,
     data: MMPDataPoint[],
@@ -72,7 +64,7 @@ export const gradientDescent = (
 
 
     //console.log("iteration", i);
-    const grad = numericalGradient(loss, params, data);
+    const grad = numericalGradientPT(loss, params, data);
 
     let j: keyof PTSolution;
     for (j in params) {
@@ -142,7 +134,7 @@ export const gradientDescent = (
   };
 }
 
-export const numericalGradient = (
+export const numericalGradientPT = (
   loss: (params:PTSolution, data:MMPDataPoint[]) => number,
   params: PTSolution,
   data: MMPDataPoint[],
@@ -157,6 +149,122 @@ export const numericalGradient = (
   };
   const delta = 0.0001;
   let j: keyof PTSolution;
+  //console.log(params)
+  for (j in params) {
+
+    const initialValue = params[j];
+    params[j] = initialValue + delta;
+    const lossPlusDelta: number = loss(params, data);
+    params[j] = initialValue - delta;
+    const lossMinusDelta: number = loss(params, data);
+
+    grad[j] = (lossPlusDelta - lossMinusDelta) / (2 * delta);
+    params[j] = initialValue;
+    //console.log(j, delta, lossPlusDelta, lossMinusDelta, grad[j] );
+  }
+
+  return grad;
+}
+
+export const gradientDescentExtended = (
+  loss: (
+    initialParams : ExtendedSolution,
+    data: MMPDataPoint[],
+  ) => number,
+  initialParams : ExtendedSolution,
+  data: MMPDataPoint[],
+  learningRate: ExtendedSolution,
+  learningDecay: number,
+  iterations: number,
+  parameterBounds:Record<string, Array<number>>,
+  minMSEDelta:number,
+)=> {
+
+  //console.log("optimization", {...initialParams})
+
+
+  const params: ExtendedSolution = {...initialParams};
+  const mse0 = loss(initialParams, data);
+  let mseLast: number = mse0;
+  let finalIterationCount: number = 0;
+  for (let i = 0; i < iterations; i++) {
+
+
+    //console.log("iteration", i);
+    const grad = numericalGradientExtended(loss, params, data);
+    //console.log(grad);
+    //console.log(JSON.stringify(grad))
+
+
+    const delta: number[] = [];
+    //let j: keyof ExtendedSolution;
+    for (const j in params) {
+      learningRate[j] *= learningDecay;
+      delta[j] = learningRate[j] * grad[j];
+      params[j] -= delta[j];
+      params[j] = Math.max(parameterBounds[j][0], Math.min(parameterBounds[j][1], params[j]));
+
+    }
+    //console.log(delta);
+    //console.log(JSON.stringify(params))
+
+    const mseCurrent = loss(params, data);
+    finalIterationCount = i + 1;
+
+    if (Math.abs(mseCurrent - mseLast) < minMSEDelta) {
+      console.log(`stopping iterations at ${i} for min delta ${minMSEDelta}`)
+
+      i = iterations
+
+    } else if(mseCurrent < 0.005){
+      //good luck getting this perfect!!!
+      console.log(`stopping iterations at ${i} for mse under 0.005`)
+      i = iterations
+    } else if (i != iterations - 1) {
+      mseLast = mseCurrent;
+    }
+
+  }
+
+  const mse = loss(params, data);
+  let j: keyof ExtendedSolution;
+  for (j in params) {
+    if (j === "paa") {
+      params[j] = Math.round(params[j]*100)/100;
+    } else {
+      params[j] = Math.round(params[j]*1000)/1000;
+    }
+  }
+
+  const mseRound = loss(params, data);
+
+  return {
+    params      : { ...params },
+    iterations  : finalIterationCount,
+    mse0        : Math.round(mse0 * 10000) / 10000,
+    mseStop     : Math.round(mse * 10000000) / 10000000,
+    mseEffective: Math.round(mseRound * 10000) / 10000,
+    msePrev     : Math.round(mseLast * 10000000) / 10000000,
+  };
+}
+
+export const numericalGradientExtended = (
+  loss: (params:ExtendedSolution, data:MMPDataPoint[]) => number,
+  params: ExtendedSolution,
+  data: MMPDataPoint[],
+)=> {
+  const grad: ExtendedSolution = {
+    cp      : 0,
+    cpdec   : 0,
+    cpdecdel: 0,
+    cpdel   : 0,
+    paa     : 0,
+    paadec  : 0,
+    tau     : 0,
+    taudel  : 0,
+  };
+  const delta = 0.000001;
+  let j: keyof ExtendedSolution;
   //console.log(params)
   for (j in params) {
 

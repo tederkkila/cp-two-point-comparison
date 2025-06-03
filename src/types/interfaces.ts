@@ -42,6 +42,34 @@ export type PTEstimationProps = {
   margin?: { top: number; right: number; bottom: number; left: number };
 }
 
+export interface ExtendedSolution extends Record<string, number> {
+  cp: number;
+  cpdec: number;
+  cpdecdel: number;
+  cpdel: number;
+  paa: number;
+  paadec: number;
+  tau: number;
+  taudel: number;
+}
+
+export interface ExtendedLinePoint {
+  x: number;
+  c1: number;
+  c2: number;
+  c3: number;
+  total: number;
+}
+
+export type ExtendedEstimationProps = {
+  width: number;
+  height: number;
+  mmpData: MMPDataPoint[];
+  initialParams: ExtendedSolution;
+  setExtendedSolution: Dispatch<SetStateAction<ExtendedSolution | null>>;
+  margin?: { top: number; right: number; bottom: number; left: number };
+}
+
 export type DistanceScenariosProps = {
   width: number;
   height: number;

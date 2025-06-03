@@ -1,15 +1,14 @@
 import { useEffect, useMemo } from "react";
 import {
-  CPLinePoint, CPSolution,
+  CPLinePoint,
   DataPoint,
-  MMPDataPoint,
   PTEstimationProps,
   PTLinePoint,
   PTSolution
 } from "../types/interfaces.ts"
-import { plotFRC, plotFTP, plotTTE, plotCP } from "../libs/geometry.ts";
+import { generateCPCurveData, generatePTCurveData, createPointData } from "../libs/curveGeneration.ts";
 import { calculateLineOfBestFit } from "../libs/lineOfBestFit.ts";
-import { loss, gradientDescent } from "../libs/optimization.ts";
+import { lossPT, gradientDescentPT } from "../libs/optimization.ts";
 import { Group } from '@visx/group';
 import { curveBasis } from "@visx/curve";
 import { Circle, LinePath, AreaStack } from "@visx/shape";
@@ -30,106 +29,8 @@ const logValues = [minT, 60, 3 * 60, 5 * 60, 10 * 60, 20 * 60, 60 * 60, maxT];
 const cpValidTimeMin = 2*60; //2min
 const cpValidTimeMax = 22*60; //
 
-//Curve generation
-
-const generateCPCurveData = (
-  cpSolution: CPSolution
-):CPLinePoint[] => {
-  //keep CP line above 30s
-  const arrayCount = maxT / tStep - 30 / tStep + 1;
-  return new Array(arrayCount).fill(null).map((_, i) =>
-    generateCPCurveRow(i, cpSolution)
-  );
-}
-
-const generateCPCurveRow = (
-  x: number,
-  cpSolution: CPSolution
-): CPLinePoint => {
-  //keep CP line above 30s
-  const t:number = 30 + x * tStep;
-  const power: number = plotCP(
-    t,
-    cpSolution.CP,
-    cpSolution.W,
-  );
-
-  return {
-    x : t,
-    y : power,
-  }
-}
-
-const generatePTCurveData =(
-  ptSolution: PTSolution,
-):PTLinePoint[] => {
-
-  const lowCount = (minT === tStep) ? 0 : minT / tStep;
-  const arrayCount = maxT / tStep - lowCount + 1;
-  return new Array(arrayCount).fill(null).map((_, i) =>
-    generatePTCurveRow(i, ptSolution)
-  );
-}
-
-const generatePTCurveRow = (
-  x: number,
-  ptSolution: PTSolution,
-): PTLinePoint => {
-
-  const t:number = minT + x * tStep;
-  const frc: number = plotFRC(
-    t,
-    ptSolution.FRC,
-    ptSolution.Pmax,
-  );
-  const ftp: number = plotFTP(
-    t,
-    ptSolution.FTP,
-    ptSolution.tau2,);
-  const tte: number = plotTTE(
-    t,
-    ptSolution.TTE,
-    ptSolution.a,
-    );
-  const total = frc + ftp - tte;
-  const ftpX = ftp - tte;
-
-  return {
-    x : t,
-    frc: frc,
-    ftp: ftp,
-    tte: tte,
-    total : total,
-    ftpX : ftpX,
-  }
-}
-
 //Point Generation
-const createPTPointData = (
-  mmpData: MMPDataPoint[],
-): DataPoint[] => {
-  const dataPoints: DataPoint[] = [];
-  for (const row in mmpData) {
-    dataPoints.push(generatePointRow(mmpData[row].time, mmpData[row].power, 'black'));
-  }
-  return dataPoints
-};
 
-const generatePointRow = (
-  x: number,
-  y: number,
-  color: string,
-  text1?: string,
-  text2?: string,
-): DataPoint => {
-  return {
-    x    : x,
-    y    : y,
-    color: color,
-    text1: text1,
-    text2: text2,
-  }
-}
 
 const getX = (d: PTLinePoint) => d.x;
 const getFRC = (d: PTLinePoint) => d.frc;
@@ -166,14 +67,16 @@ export default function PTEstimation({ width, height, mmpData, initialParams, se
   //console.log("PTEstimation|initialParams",initialParams);
   width = Math.floor(width);
 
+  // graph bounds
+  const xMax = width - margin.left - margin.right;
+  const yMax = height - margin.top - margin.bottom;
+
   if (currentParams.FRC === 0) {
     currentParams = initialParams;
   }
   //console.log(currentParams)
 
-  // graph bounds
-  const xMax = width - margin.left - margin.right;
-  const yMax = height - margin.top - margin.bottom;
+
 
   /*** CALCULATE CP FIRST TO FEED IN FTP AND FRC VALUES TO PTSOLUTION ***/
 
@@ -206,8 +109,8 @@ export default function PTEstimation({ width, height, mmpData, initialParams, se
     }, [dataPoints])
 
 
-  const cpCurveData = generateCPCurveData(cpSolution)
-  const cpPointData = createPTPointData(mmpDataCPSubset);
+  const cpCurveData = generateCPCurveData(cpSolution, maxT, tStep)
+  const cpPointData = createPointData(mmpDataCPSubset);
 
   /*** IF CP and W then use them in current params ***/
   //console.log("cpSolution.W", cpSolution.W, typeof cpSolution.W)
@@ -221,15 +124,15 @@ export default function PTEstimation({ width, height, mmpData, initialParams, se
   const optimizationSolution = useMemo(() => {
 
     //console.log("Running optimizationSolution", mmpData)
-    const iterations: number = 30000;
-    const learningDecay: number = 0.9998;
+    const iterations: number = 50000;
+    const learningDecay: number = 0.9999;
     const minMSEDelta: number = 0.000001;
     const parameterBounds = {
       FRC : [4000, 35000],
       Pmax : [300, 1500],
       FTP : [100, 700],
       tau2 : [12, 13],
-      TTE: [180, 1200],
+      TTE: [180, 3600],
       a : [8, 20],
     };
     const learningRate: PTSolution = {
@@ -237,12 +140,12 @@ export default function PTEstimation({ width, height, mmpData, initialParams, se
       Pmax : 1,
       FTP : 1,
       tau2 : 0.001,
-      TTE: 1,
+      TTE: 0.1,
       a : 0.001,
     };
 
-    const optimizationGD = gradientDescent(
-      loss,
+    const optimizationGD = gradientDescentPT(
+      lossPT,
       currentParams,
       mmpData,
       learningRate,
@@ -263,10 +166,10 @@ export default function PTEstimation({ width, height, mmpData, initialParams, se
   const optimizedParams = optimizationSolution.params
 
 
-  const ptCurveData = generatePTCurveData(optimizedParams);
+  const ptCurveData = generatePTCurveData(optimizedParams, minT, maxT, tStep);
   const ptCurveDataCleanTTE: PTLinePoint[] = ptCurveData.filter((d) => d.tte !== 0 );
   //console.log(ptCurveDataCleanTTE)
-  const ptPointData = createPTPointData(mmpData);
+  const ptPointData = createPointData(mmpData);
 
   const areaKeys = ['frc', 'ftpX', 'tte'];
   //const areaColors: Record<string, string> = {frc:'teal', tte:'red', ftpX:'purple'};

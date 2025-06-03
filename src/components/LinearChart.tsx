@@ -4,7 +4,7 @@ import { Group } from '@visx/group';
 import { LinePath } from '@visx/shape';
 import { scaleLinear } from '@visx/scale';
 import { MarkerCircle } from '@visx/marker';
-import { calculateIntercept, calculateSlope, plotXY } from "../libs/geometry";
+import { calculateIntercept, calculateSlope, plotXY } from "../libs/calculations_cp.ts";
 
 
 type CurveType = keyof typeof allCurves;

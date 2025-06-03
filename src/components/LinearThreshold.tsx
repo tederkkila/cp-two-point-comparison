@@ -5,7 +5,7 @@ import { Threshold } from '@visx/threshold';
 import { scaleLinear } from '@visx/scale';
 import { AxisLeft, AxisBottom } from '@visx/axis';
 import { GridRows, GridColumns } from '@visx/grid';
-import { calculateIntercept, calculateSlope, plotXY } from "../libs/geometry";
+import { calculateIntercept, calculateSlope, plotXY } from "../libs/calculations_cp.ts";
 
 export const background = '#f3f3f3';
 

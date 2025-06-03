@@ -5,7 +5,7 @@ import { BarStackHorizontal } from '@visx/shape';
 import { Group } from '@visx/group';
 import { AxisBottom, AxisLeft } from '@visx/axis';
 import { scaleLinear, scaleBand, scaleOrdinal } from "@visx/scale";
-import { pt_model } from "../libs/optimization.ts";
+import { pt_model } from "../libs/calculations_pt.ts";
 import { useMemo } from "react";
 
 const purple1 = '#6c5efb';
@@ -74,7 +74,7 @@ const defaultMargin = { top: 40, right: 30, bottom: 50, left: 50 };
 const getTitle = (d:Scenario) => d.title;
 
 
-export default function DistanceScenarios({ width, height, ptSolution, distance, kg, re, margin = defaultMargin }: DistanceScenariosProps) {
+export default function PTDistanceScenarios({ width, height, ptSolution, distance, kg, re, margin = defaultMargin }: DistanceScenariosProps) {
 
   if (!ptSolution.kg) {
     ptSolution.kg = kg;

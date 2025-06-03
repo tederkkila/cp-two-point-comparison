@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import PTApp from './PTApp.tsx'
+import ExtendedApp from './ExtendedApp.tsx'
 import {
   createBrowserRouter,
   RouterProvider
@@ -16,6 +17,10 @@ const router = createBrowserRouter([
   {
     path: "/pt",
     element: <PTApp />,
+  },
+  {
+    path: "/extended",
+    element: <ExtendedApp />,
   },
   {
     path: "/:testTwoShortTime/:testTwoShortWatt/:testTwoLongTime/:testTwoLongWatt",

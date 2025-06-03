@@ -11,7 +11,7 @@ import { AxisLeft, AxisBottom } from '@visx/axis';
 import { GridRows, GridColumns } from '@visx/grid';
 import { PatternLines } from '@visx/pattern';
 import { LinearGradient } from '@visx/gradient';
-import { calculateIntercept, calculateSlope, plotCP } from "../libs/geometry";
+import { calculateIntercept, calculateSlope, plotCP } from "../libs/calculations_cp.ts";
 import { useState, useEffect } from "react";
 
 export const background = '#f3f3f3';

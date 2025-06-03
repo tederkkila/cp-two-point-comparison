@@ -1,29 +1,30 @@
-export const plotXY = (
-  x: number,
-  slope: number,
-  intercept: number
-) => {
-  return slope * x + intercept
-}
+import { PTSolution } from "../types/interfaces.ts";
 
-export const plotCP = (
-  x: number,
-  cp: number,
-  w: number
-) => {
-  return w / x + cp
-}
+export const pt_model = (
+  t: number,
+  ptSolution: PTSolution
+)=> {
 
-export const calculateSlope = (
-  x0: number, x1: number, y0: number, y1: number
-): number => {
-  return (y1 - y0) / (x1 - x0);
-}
+  const frc: number = plotFRC(
+    t,
+    ptSolution.FRC,
+    ptSolution.Pmax,
+  );
 
-export const calculateIntercept = (
-  slope: number, x0: number, y0: number,
-): number => {
-  return y0 - (slope * x0);
+  const ftp: number = plotFTP(
+    t,
+    ptSolution.FTP,
+    ptSolution.tau2,);
+
+  const tte: number = plotTTE(
+    t,
+    ptSolution.TTE,
+    ptSolution.a,
+  );
+
+  //console.log(ptSolution.FTP, ptSolution.tau2)
+  //console.log(t, frc, ftp, tte)
+  return frc + ftp - tte;
 }
 
 export const plotFRC = (
@@ -60,4 +61,3 @@ export const plotTTE = (
   }
   return y
 }
-
