@@ -23,14 +23,14 @@ export interface DataPoint {
   text2? : string;
 }
 
-export interface PTSolution {
+export interface PTSolution extends Record<string, number> {
   FRC : number;
   Pmax : number;
   FTP : number;
   tau2 : number;
   TTE: number;
   a : number;
-  kg?: number;
+  kg: number;
 }
 
 export type PTEstimationProps = {

@@ -68,10 +68,12 @@ export const gradientDescentPT = (
 
     let j: keyof PTSolution;
     for (j in params) {
-      learningRate[j] *= learningDecay;
-      const delta = learningRate[j] * grad[j];
-      params[j] -= delta;
-      params[j] = Math.max(parameterBounds[j][0], Math.min(parameterBounds[j][1], params[j]));
+      if (j !== 'kg') {
+        learningRate[j] *= learningDecay;
+        const delta = grad[j] * learningRate[j];
+        params[j] -= delta;
+        params[j] = Math.max(parameterBounds[j][0], Math.min(parameterBounds[j][1], params[j]));
+      }
 
     }
     // console.log(params)
@@ -118,8 +120,10 @@ export const gradientDescentPT = (
   for (j in params) {
     if (j === "FRC" || j === "Pmax" || j === "TTE") {
       params[j] = Math.round(params[j]);
-    } else {
+    } else if (j == "tau2" || j === "a" || j === "FTP") {
       params[j] = Math.round(params[j]*10)/10;
+    } else {
+      //do nothing
     }
   }
 
@@ -146,6 +150,7 @@ export const numericalGradientPT = (
     tau2 : 0,
     TTE: 0,
     a : 0,
+    kg : 0,
   };
   const delta = 0.0001;
   let j: keyof PTSolution;
@@ -153,13 +158,17 @@ export const numericalGradientPT = (
   for (j in params) {
 
     const initialValue = params[j];
-    params[j] = initialValue + delta;
-    const lossPlusDelta: number = loss(params, data);
-    params[j] = initialValue - delta;
-    const lossMinusDelta: number = loss(params, data);
+    if (initialValue) {
+      params[j] = initialValue + delta;
+      const lossPlusDelta: number = loss(params, data);
+      params[j] = initialValue - delta;
+      const lossMinusDelta: number = loss(params, data);
 
-    grad[j] = (lossPlusDelta - lossMinusDelta) / (2 * delta);
-    params[j] = initialValue;
+      grad[j] = (lossPlusDelta - lossMinusDelta) / (2 * delta);
+      params[j] = initialValue;
+    } else {
+      console.log("initialValue is not defined")
+    }
     //console.log(j, delta, lossPlusDelta, lossMinusDelta, grad[j] );
   }
 
@@ -196,16 +205,15 @@ export const gradientDescentExtended = (
     //console.log(JSON.stringify(grad))
 
 
-    const delta: number[] = [];
-    //let j: keyof ExtendedSolution;
-    for (const j in params) {
+    let delta: number;
+    let j: keyof ExtendedSolution;
+    for (j in params) {
       learningRate[j] *= learningDecay;
-      delta[j] = learningRate[j] * grad[j];
-      params[j] -= delta[j];
+      delta = learningRate[j] * grad[j];
+      params[j] -= delta;
       params[j] = Math.max(parameterBounds[j][0], Math.min(parameterBounds[j][1], params[j]));
 
     }
-    //console.log(delta);
     //console.log(JSON.stringify(params))
 
     const mseCurrent = loss(params, data);

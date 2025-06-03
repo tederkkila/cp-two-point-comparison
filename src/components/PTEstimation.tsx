@@ -59,6 +59,7 @@ let currentParams: PTSolution = {
   tau2 : 0,
   TTE: 0,
   a : 0,
+  kg : 0,
 };
 
 export default function PTEstimation({ width, height, mmpData, initialParams, setPTSolution, margin = defaultMargin }: PTEstimationProps) {
@@ -142,6 +143,7 @@ export default function PTEstimation({ width, height, mmpData, initialParams, se
       tau2 : 0.001,
       TTE: 0.1,
       a : 0.001,
+      kg: 1, //not actually used
     };
 
     const optimizationGD = gradientDescentPT(

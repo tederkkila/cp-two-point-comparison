@@ -139,6 +139,7 @@ const initialParamsDefault: PTSolution = {
   tau2 : 12.8,
   TTE: 420,
   a : 16.9,
+  kg: 75,
 };
 
 const distanceMeters = {

@@ -145,16 +145,16 @@ const initialParamsDefault: ExtendedSolution = {
   taudel  : -4.8,
 };
 
-const initialParamsPerfect: ExtendedSolution = {
-  cp      : 368.307779086647,
-  cpdec   : -0.172873679728639,
-  cpdecdel: -25.6332667882639,
-  cpdel   : -3.71759146408344,
-  paa     : 1199.97640109532,
-  paadec  : -8.22147030800883,
-  tau     : 0.904442912161157,
-  taudel  : -6.78717293919494,
-}
+// const initialParamsPerfect: ExtendedSolution = {
+//   cp      : 368.307779086647,
+//   cpdec   : -0.172873679728639,
+//   cpdecdel: -25.6332667882639,
+//   cpdel   : -3.71759146408344,
+//   paa     : 1199.97640109532,
+//   paadec  : -8.22147030800883,
+//   tau     : 0.904442912161157,
+//   taudel  : -6.78717293919494,
+// }
 
 // const distanceMeters = {
 //   fiveK: 5000,
@@ -177,13 +177,13 @@ function ExtendedApp() {
   } else {
     re = 0.95;
   }
-  //console.log("re", re)
+  console.log("re", re)
 
   const initialParams = initialParamsDefault;
   //console.log("PTApp|initialParams",initialParams);
 
   const [extendedSolution, setExtendedSolution] = useState<ExtendedSolution | null>(null);
-  //console.log("extendedSolution", extendedSolution);
+  console.log("extendedSolution", extendedSolution);
 
   return (
     <main className="flex flex-col p-1">
