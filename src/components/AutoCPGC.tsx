@@ -413,8 +413,8 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
             y={(d) => yScale(d) ?? 0}
             stroke={"purple"}
             strokeWidth={1}
-            strokeOpacity={0.8}
-            strokeDasharray="1,5"
+            strokeOpacity={0.7}
+            strokeDasharray="1,2"
           />
           <LinePath
             data={extendedCurveData}
@@ -423,8 +423,8 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
             y={(d) => yScale(d.c3) ?? 0}
             stroke="purple"
             strokeWidth={2}
-            strokeOpacity={0.8}
-            strokeDasharray="1,2"
+            strokeOpacity={0.7}
+            strokeDasharray="1,5"
           />
 
 
@@ -434,17 +434,18 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
             curve={curveBasis}
             x={(d:number, index:number) => logScale(index + 1) ?? d}
             y={(d) => yScale(d) ?? 0}
-            stroke="purple"
-            strokeWidth={3.0}
+            stroke="indigo"
+            strokeWidth={1.0}
             strokeOpacity={0.5}
+            strokeDasharray="1,5"
           />
           <LinePath
             data={extendedCurveData}
             curve={curveBasis}
             x={(d) => logScale(d.x) ?? 0}
             y={(d) => yScale(d.total) ?? 0}
-            stroke="black"
-            strokeWidth={1}
+            stroke="indigo"
+            strokeWidth={2}
             strokeOpacity={0.8}
             //strokeDasharray="1,8"
           />
