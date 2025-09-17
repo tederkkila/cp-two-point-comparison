@@ -78,7 +78,7 @@ export type AutoCPProps = {
   height: number;
   jsonData: JSON;
   initialParams: ExtendedSolution;
-  setExtendedSolution: Dispatch<SetStateAction<ExtendedSolution | null>>;
+  // setExtendedSolution: Dispatch<SetStateAction<ExtendedSolution | null>>;
   margin?: { top: number; right: number; bottom: number; left: number };
 }
 

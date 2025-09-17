@@ -60,8 +60,8 @@ function AutoCPApp() {
   //   return <div>Loading...</div>;
   // }
 
-  const [extendedSolution, setExtendedSolution] = useState<ExtendedSolution | null>(null);
-  console.log("extendedSolution", extendedSolution);
+  // const [extendedSolution, setExtendedSolution] = useState<ExtendedSolution | null>(null);
+  // console.log("extendedSolution", extendedSolution);
 
   return (
     <main className="flex flex-col p-1">
@@ -84,7 +84,7 @@ function AutoCPApp() {
                 height={500}
                 jsonData={jsonData}
                 initialParams={initialParams}
-                setExtendedSolution={setExtendedSolution}
+                // setExtendedSolution={setExtendedSolution}
               />
             }</ParentSize>
             ) : (

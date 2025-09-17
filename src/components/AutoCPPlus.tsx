@@ -55,7 +55,7 @@ const pointX = (d: DataPoint) => d.x;
 const pointY = (d: DataPoint) => d.y;
 const pointC = (d: DataPoint) => d.color;
 
-export default function AutoCP({ width, height, jsonData, initialParams, setExtendedSolution, margin = defaultMargin }: AutoCPProps) {
+export default function AutoCP({ width, height, jsonData, initialParams, margin = defaultMargin }: AutoCPProps) {
 
   width = Math.floor(width);
   // graph bounds
@@ -69,7 +69,8 @@ export default function AutoCP({ width, height, jsonData, initialParams, setExte
   let optimizedParams = initialParams;
   //console.log(optimizedParams)
 
-  const pdc: StrydPDC = jsonData;
+  const jsonString = JSON.stringify(jsonData);
+  const pdc: StrydPDC = JSON.parse(jsonString);
 
   //get sample points for optimization
   const mmpData: MMPDataPoint[] = [];
@@ -154,6 +155,7 @@ export default function AutoCP({ width, height, jsonData, initialParams, setExte
   }, []);
 
   Object.entries(bestIntervals).forEach(([key, value], index) => {
+    console.log(key);
     userData[index] = {time: value.t, power: value.power}
   })
 
