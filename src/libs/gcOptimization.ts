@@ -31,7 +31,7 @@ export const lossTimeIntervals = (
 
   const gcSolution: ExtendedSolution =  iterateExtendedParams (
     maxLoops,
-    pdc,
+    [...pdc.curve.power_list],
     roundedTimeIntervals,
     functionalData,
     {...params},
