@@ -3,6 +3,9 @@ import { Dispatch, SetStateAction } from "react";
 export interface MMPDataPoint extends Record<string, number|undefined> {
   time: number;
   power: number;
+  c1?: number;
+  c2?: number;
+  c3?: number;
   distance?: number;
 }
 
@@ -69,6 +72,54 @@ export type ExtendedEstimationProps = {
   setExtendedSolution: Dispatch<SetStateAction<ExtendedSolution | null>>;
   margin?: { top: number; right: number; bottom: number; left: number };
 }
+
+export type AutoCPProps = {
+  width: number;
+  height: number;
+  jsonData: JSON;
+  initialParams: ExtendedSolution;
+  setExtendedSolution: Dispatch<SetStateAction<ExtendedSolution | null>>;
+  margin?: { top: number; right: number; bottom: number; left: number };
+}
+
+export type AutoCPComponentProps = {
+  width: number;
+  height: number;
+  pdc: StrydPDC;
+  initialParams: ExtendedSolution;
+  verbose: boolean,
+  margin?: { top: number; right: number; bottom: number; left: number };
+}
+
+export type AutoCPGCProps = {
+  width: number;
+  height: number;
+  pdc: StrydPDC;
+  initialParams: ExtendedSolution;
+  forecastData: MMPDataPoint[];
+  verbose: boolean,
+  margin?: { top: number; right: number; bottom: number; left: number };
+}
+
+export interface StrydPDCCurve {
+  power_list: number[];
+  timestamp_list: number[];
+  id_list: number[];
+  title_list: number[];
+}
+
+export interface StrydPDCBreakdown {
+  alactic: number[];
+  anaerobic: number[];
+  aerobic: number[];
+  total: number[];
+}
+
+export interface StrydPDC {
+  curve: StrydPDCCurve;
+  breakdown: StrydPDCBreakdown;
+}
+
 
 export type DistanceScenariosProps = {
   width: number;

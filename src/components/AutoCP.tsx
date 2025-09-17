@@ -1,52 +1,29 @@
-import {
-  CPLinePoint,
-  DataPoint,
-  ExtendedEstimationProps,
-  ExtendedLinePoint,
-  ExtendedSolution,
-} from "../types/interfaces.ts";
+import { AutoCPProps, StrydPDC, ExtendedSolution, MMPDataPoint, DataPoint } from "../types/interfaces.ts";
 import { Group } from "@visx/group";
 import { GridColumns, GridRows } from "@visx/grid";
 import { AxisBottom, AxisLeft } from "@visx/axis";
 import { coerceNumber, scaleLinear, scaleLog } from "@visx/scale";
-import { useEffect, useMemo } from "react";
-import { createPointData, generateCPCurveData, generateExtendedCurveData } from "../libs/curveGeneration.ts";
-import { AreaStack, Circle, LinePath } from "@visx/shape";
+import { AreaClosed, Circle, LinePath } from "@visx/shape";
 import { curveBasis } from "@visx/curve";
-import { LinearGradient } from "@visx/gradient";
-import { SeriesPoint } from "@visx/shape/lib/types";
-import { gradientDescentExtended, lossExtended } from "../libs/optimization.ts";
+import { useMemo } from "react";
+import {
+  createPointData,
+  generateCPCurveData,
+  generateExtendedCurveDataFromOne
+} from "../libs/curveGeneration.ts";
 import { calculateLineOfBestFit } from "../libs/lineOfBestFit.ts";
-import { plotCP } from "../libs/calculations_cp.ts";
-
+import { gradientDescentExtended, lossExtended } from "../libs/optimization.ts";
 
 const background = '#f3f3f3';
 const defaultMargin = { top: 40, right: 30, bottom: 50, left: 50 };
 
-const minT: number = 5;
+const minT: number = 1;
 const maxT: number = 4 * 60*60;
 const tStep = 5;
 const logValues = [minT, 60, 3 * 60, 5 * 60, 10 * 60, 20 * 60, 60 * 60, maxT];
 
 const cpValidTimeMin = 2*60; //2min
 const cpValidTimeMax = 22*60; //
-
-const getX = (d: ExtendedLinePoint) => d.x;
-const getC1 = (d: ExtendedLinePoint) => d.c1;
-const getC2 = (d: ExtendedLinePoint) => d.c2;
-const getC3 = (d: ExtendedLinePoint) => d.c3;
-const getTotal = (d: ExtendedLinePoint) => d.total;
-
-const pointX = (d: DataPoint) => d.x;
-const pointY = (d: DataPoint) => d.y;
-const pointC = (d: DataPoint) => d.color;
-
-const getCPX = (d: CPLinePoint) => d.x;
-const getCPY = (d: CPLinePoint) => d.y;
-
-const getAreaX =(d: ExtendedLinePoint) => d.x;
-const getAreaY0 =(d: SeriesPoint<ExtendedLinePoint>) => d[0];
-const getAreaY1 =(d: SeriesPoint<ExtendedLinePoint>) => d[1];
 
 let currentParams: ExtendedSolution = {
   paa     : 0,
@@ -59,21 +36,36 @@ let currentParams: ExtendedSolution = {
   cpdecdel: 0,
 };
 
-export default function ExtendedEstimation({ width, height, mmpData, initialParams, setExtendedSolution, margin = defaultMargin }: ExtendedEstimationProps) {
+const targetTimePoints = [10, 20, 30, 60, 90, 180, 300, 60*10, 60*12, 60*20, 60*30, 60*60, 60*90, 60*120, 60*180]
+
+const pointX = (d: DataPoint) => d.x;
+const pointY = (d: DataPoint) => d.y;
+const pointC = (d: DataPoint) => d.color;
+
+export default function AutoCP({ width, height, jsonData, initialParams, setExtendedSolution, margin = defaultMargin }: AutoCPProps) {
 
   width = Math.floor(width);
+  // graph bounds
+  const xMax = width - margin.left - margin.right;
+  const yMax = height - margin.top - margin.bottom;
 
   if (currentParams.cp === 0) {
     currentParams = initialParams;
   }
 
-  // graph bounds
-  const xMax = width - margin.left - margin.right;
-  const yMax = height - margin.top - margin.bottom;
+  let optimizedParams = initialParams;
+  //console.log(optimizedParams)
 
-  let optimizedParams = initialParams
+  const pdc: StrydPDC = jsonData;
 
-  /*** CALCULATE CP FIRST TO FEED IN FTP AND FRC VALUES TO PTSOLUTION ***/
+  //get sample points for optimization
+  const mmpData: MMPDataPoint[] = [];
+  targetTimePoints.map((point, i) => {
+    //console.log(point, pdc.breakdown.total[point-1])
+    if (pdc.breakdown.total[point-1] != undefined) {
+      mmpData[i] = {time:point, power: pdc.breakdown.total[point-1]}
+    }
+  })
 
   const mmpDataCPSubset = mmpData.filter(x => x.time >= cpValidTimeMin -1 && x.time <= cpValidTimeMax + 1);
   //console.log(mmpDataCPSubset)
@@ -103,17 +95,13 @@ export default function ExtendedEstimation({ width, height, mmpData, initialPara
     }
   }, [dataPoints])
 
-
   const cpCurveData = generateCPCurveData(cpSolution, maxT, tStep)
   const cpPointData = createPointData(mmpDataCPSubset);
 
   /*** IF CP and W then use them in current params ***/
-  //console.log("cpSolution.W", cpSolution.W, typeof cpSolution.W)
   if (cpSolution.W && cpSolution.CP) {
     //currentParams.tau = cpSolution.W / cpSolution.CP / 60 ;
-    // console.log("tau from CP", currentParams.tau);
-    //currentParams.cp = cpSolution.CP;
-    currentParams.paa = cpSolution.CP * 3;
+    //currentParams.paa = cpSolution.CP * 3;
   }
 
   /*** Estimate Params from data ***/
@@ -121,36 +109,64 @@ export default function ExtendedEstimation({ width, height, mmpData, initialPara
 
     const params: ExtendedSolution = {...currentParams}
 
-    const best1hour = plotCP(60*60, cpSolution.CP, cpSolution.W);
+    const best5s = pdc.breakdown.total[5-1];
+    console.log("best5s", best5s);
+    params.paa = best5s;
+    console.log("paa", params.paa);
+
+    const best1hour = pdc.breakdown.total[60*60-1];
     console.log("best1hour", best1hour);
-    params.cp = (best1hour - params.paa * (1.20-0.20*Math.exp(-1*(3600/60.0))) * + Math.exp(params.paadec*(3600/60.0))) / (1-Math.exp(params.taudel*(3600/60.0))) / (1-Math.exp(params.cpdel*(3600/60.0))) / (1+params.cpdec*Math.exp(params.cpdecdel/(3600/60.0))) / ( 1 + params.tau/(3600/60.0));
+    // console.log(params.paa * (1.20-0.20*Math.exp(-1*(3600/60.0))));
+    // console.log(Math.exp(params.paadec*(3600/60.0)))
+    // console.log((1-Math.exp(params.taudel*(3600/60.0))))
+    // console.log((1-Math.exp(params.cpdel*(3600/60.0))))
+    // console.log((1+params.cpdec*Math.exp(params.cpdecdel/(3600/60.0))))
+    // console.log(params.tau, ( 1 + params.tau/(3600/60.0)))
+    params.cp = (best1hour - params.paa * (1.20-0.20*Math.exp(-1*(3600/60.0))) * Math.exp(params.paadec*(3600/60.0))) / (1-Math.exp(params.taudel*(3600/60.0))) / (1-Math.exp(params.cpdel*(3600/60.0))) / (1+params.cpdec*Math.exp(params.cpdecdel/(3600/60.0))) / ( 1 + params.tau/(3600/60.0));
     console.log("cp from GC", params.cp)
+    // if (params.cp < cpSolution.CP) {
+    //   console.log(`using CP 2 point estimate of ${cpSolution.CP} instead of ${params.cp}`)
+    //   params.cp = cpSolution.CP;
+    // }
 
-    const best5min = plotCP(60*5, cpSolution.CP, cpSolution.W);
+    const best20min = pdc.breakdown.total[60*20-1];
+    console.log("best20min", best20min);
+    params.cp = (best20min - params.paa * (1.20-0.20*Math.exp(-1*(1200/60.0))) * Math.exp(params.paadec*(1200/60.0))) / (1-Math.exp(params.taudel*(1200/60.0))) / (1-Math.exp(params.cpdel*(1200/60.0))) / (1+params.cpdec*Math.exp(params.cpdecdel/(1200/60.0))) / ( 1 + params.tau/(1200/60.0));
+    console.log("test20minCP", params.cp);
+    params.tau = ((best20min - params.paa * (1.20-0.20*Math.exp(-1*(1200/60.0))) * Math.exp(params.paadec*(1200/60.0))) /params.cp / (1-Math.exp(params.taudel*(1200/60.0))) / (1-Math.exp(params.cpdel*(1200/60.0))) / (1+params.cpdec*Math.exp(params.cpdecdel/(1200/60.0))) - 1) * (1200/60.0);
+    console.log("tau from 20min GC", params.tau);
+
+    const best10min = pdc.breakdown.total[60*10-1];
+    console.log("best10min", best10min);
+    params.tau = ((best10min - params.paa * (1.20-0.20*Math.exp(-1*(600/60.0))) * Math.exp(params.paadec*(600/60.0))) /params.cp / (1-Math.exp(params.taudel*(600/60.0))) / (1-Math.exp(params.cpdel*(600/60.0))) / (1+params.cpdec*Math.exp(params.cpdecdel/(600/60.0))) - 1) * (600/60.0);
+    console.log("tau from 10min GC", params.tau);
+
+    const best3min = pdc.breakdown.total[60*3-1];
+    console.log("best3min", best3min);
+    params.tau = ((best3min - params.paa * (1.20-0.20*Math.exp(-1*(180/60.0))) * Math.exp(params.paadec*(180/60.0))) /params.cp / (1-Math.exp(params.taudel*(180/60.0))) / (1-Math.exp(params.cpdel*(180/60.0))) / (1+params.cpdec*Math.exp(params.cpdecdel/(180/60.0))) - 1) * (180/60.0);
+    console.log("tau from 3min GC", params.tau);
+
+    const best5min = pdc.breakdown.total[60*5-1];
     console.log("best5min", best5min);
-    params.tau = ((best5min - params.paa * (1.20-0.20*Math.exp(-1*(300/60.0))) * + Math.exp(params.paadec*(300/60.0))) /params.cp / (1-Math.exp(params.taudel*(300/60.0))) / (1-Math.exp(params.cpdel*(300/60.0))) / (1+params.cpdec*Math.exp(params.cpdecdel/(300/60.0))) - 1) * (300/60.0);
-    console.log("tau from GC", params.tau);
-    //params.tau = 0.9;
+    params.tau = ((best5min - params.paa * (1.20-0.20*Math.exp(-1*(300/60.0))) * Math.exp(params.paadec*(300/60.0))) /params.cp / (1-Math.exp(params.taudel*(300/60.0))) / (1-Math.exp(params.cpdel*(300/60.0))) / (1+params.cpdec*Math.exp(params.cpdecdel/(300/60.0))) - 1) * (300/60.0);
+    console.log("tau from 5min GC", params.tau);
 
-    const best1min = 0.8 * plotCP(60, cpSolution.CP, cpSolution.W);
+    const best1min = pdc.breakdown.total[60-1];
     console.log("best1min", best1min);
     params.paadec = Math.log((best1min - params.cp * (1-Math.exp(params.taudel*(60/60.0))) * (1-Math.exp(params.cpdel*(60/60.0))) * (1+params.cpdec * Math.exp(params.cpdecdel/(60/60.0))) * ( 1 + params.tau/(60/60.0)) ) / params.paa / (1.20-0.20 * Math.exp(-1*(60/60.0))) ) / (60/60.0);
     console.log("paadec from GC", params.paadec);
 
-    const best5s = plotCP(35, cpSolution.CP, cpSolution.W);
-    console.log("best5s", best5s);
+
     params.paa = (best5s - params.cp * (1-Math.exp(params.taudel*(5/60.0))) * (1-Math.exp(params.cpdel*(5/60.0))) * (1+params.cpdec*Math.exp(params.cpdecdel/(5/60.0))) * ( 1 + params.tau/(5/60.0))) / Math.exp(params.paadec*(5/60.0)) / (1.20-0.20*Math.exp(-1*(5/60.0)));
     console.log("paa from GC", params.paa);
 
 
     return params
-  }, [cpSolution.CP, cpSolution.W])
+  }, [cpSolution, pdc])
 
   currentParams = {
     ...calculatedParams,
   }
-  console.log("currentParams", currentParams)
-
 
   /*** CALCULATE EXTENDED SOLUTION ***/
   const optimizationSolution = useMemo(() => {
@@ -162,24 +178,25 @@ export default function ExtendedEstimation({ width, height, mmpData, initialPara
     const parameterBounds = {
       cp : [100, 700],
       cpdec : [-5, 0],
-      cpdecdel : [-180, -180],
-      cpdel : [-0.9, -0.9],
-      paa : [100, 2500],
-      paadec : [-10, -0.25],
-      tau : [0.5, 2.5],
-      taudel: [-4.8, -4.8],
+      cpdecdel : [-360, -1],
+      cpdel : [-5, -0.1],
+      paa : [100, 2000],
+      paadec : [-10, -1],
+      tau : [0.4, 2.5],
+      taudel: [-10, -0.5],
     };
     const learningRate: ExtendedSolution = {
-      cp      : 0.05,
-      cpdec   : 0.000001,
-      cpdecdel: 0.001,
-      cpdel   : 0.00001,
-      paa     : 0.1,
+      cp      : 0.0001,
+      cpdec   : 0.0001,
+      cpdecdel: 0.000000000001,//2.5,
+      cpdel   : 0.000000000001,
+      paa     : 0.005,
       paadec  : 0.00001,
-      tau     : 0.0000001,
-      taudel  : 0.000001,
+      tau     : 0.00001,
+      taudel  : 0.000000000001,
     };
 
+    console.log("currentParams", currentParams);
     const optimizationGD = gradientDescentExtended(
       lossExtended,
       currentParams,
@@ -210,18 +227,15 @@ export default function ExtendedEstimation({ width, height, mmpData, initialPara
   const finalIterations = optimizationSolution.iterations;
   optimizedParams = optimizationSolution.params
 
-
-
-
-  const extendedCurveData = generateExtendedCurveData(optimizedParams, minT, maxT, tStep);
+  const extendedCurveData = generateExtendedCurveDataFromOne(optimizedParams, maxT, tStep);
   const extendedPointData = createPointData(mmpData);
 
-  const areaKeys = ['c1', 'c2', 'c3'];
-  const areaData =  [...extendedCurveData]
+  // const areaKeys = ['c1', 'c2', 'c3'];
+  // const areaData =  [...extendedCurveData]
 
-// scales
-  const maxPoint = Math.max(...extendedPointData.map((d) => d.y));
-  const maxCurve = Math.max(...extendedCurveData.map((d) => getTotal(d))) ;
+  // scales
+  const maxPoint = Math.max(...pdc.breakdown.total);
+  const maxCurve = Math.max(...pdc.curve.power_list) ;
 
   const yScale = scaleLinear<number>({
     domain: [
@@ -243,16 +257,14 @@ export default function ExtendedEstimation({ width, height, mmpData, initialPara
     nice  : false,
   });
 
-  useEffect(() => {
-    setExtendedSolution (optimizedParams)
-  }, [setExtendedSolution, optimizedParams]);
+
+
 
   return width < 10 ? null : (
     <div>
       <svg width={width} height={height}>
         <rect x={0} y={0} width={width} height={height} fill={background} rx={14}/>
         <Group left={margin.left} top={margin.top}>
-
           <GridColumns scale={logScale} width={xMax} height={yMax} stroke="#e0e0e0"/>
           <GridRows scale={yScale} width={xMax} height={yMax} stroke={'#222'} strokeOpacity={0.5}/>
           <AxisBottom top={yMax} scale={logScale} numTicks={width > 520 ? 10 : 5}/>
@@ -269,25 +281,27 @@ export default function ExtendedEstimation({ width, height, mmpData, initialPara
           {/*key*/}
 
           {/*model results*/}
-          <text x={width - 190} y="40" style={{ fontWeight: 700 }}>Extended CP</text>
-          <line x1={width - 190 -13} x2={width - 190 - 2} y1={34} y2={34}
+          <text x={width - 190} y="25" style={{ fontWeight: 700 }}>Extended CP</text>
+          <line x1={width - 190 -13} x2={width - 190 - 2} y1={19} y2={19}
                 stroke={'purple'}
                 strokeWidth={1.5}
           />
-          <text x={width - 190} y="60">CP: {Math.round(optimizedParams.cp * 10) / 10} W</text>
-          <line x1={width - 190 -13} x2={width - 190 - 2} y1={54} y2={54}
+          <text x={width - 190} y="45">CP: {Math.round(optimizedParams.cp * 100) / 100} W</text>
+          <line x1={width - 190 -13} x2={width - 190 - 2} y1={39} y2={39}
                 stroke={'purple'}
                 strokeWidth={2}
                 strokeOpacity={0.8}
                 strokeDasharray="2,2"
           />
-          <text x={width - 190} y="75">paa: {Math.round(optimizedParams.paa)} j</text>
-          <line x1={width - 190 -13} x2={width - 190 - 2} y1={69} y2={69}
+          <text x={width - 190} y="60">paa: {Math.round(optimizedParams.paa)} j</text>
+          <line x1={width - 190 -13} x2={width - 190 - 2} y1={54} y2={54}
                 stroke="#164e63" //cyan-900
                 strokeWidth={1.5}
                 strokeOpacity={3.0}
                 strokeDasharray="2,2"
           />
+          <text x={width - 190} y="75">tau: {Math.round(optimizedParams.tau * 1000) / 1000} j</text>
+
           <text x={width - 190} y="90">W': {Math.round(optimizedParams.cp * optimizedParams.tau * 60)} j</text>
           <text x={width - 190} y="105">CPdecdel: {Math.round(-optimizedParams.cpdecdel)}</text>
           <text x={width - 190} y="120">CPdec: {Math.round(optimizedParams.cpdec*100)/100} </text>
@@ -309,90 +323,117 @@ export default function ExtendedEstimation({ width, height, mmpData, initialPara
           <rect x={logScale(cpValidTimeMax)-1} y={0} width={1} height={yMax} fill={'#854d0e'} fillOpacity={0.3}/>
 
 
-          <LinearGradient id={"gradient-c1"}
-                          from="#164e63" fromOpacity={1.0}
-                          to="cyan" toOpacity={0.5}
-                          toOffset={"90%"}
-                          rotate="0" vertical={true}/>
-          <LinearGradient id={"gradient-c2"}
-                          from="#047857" fromOpacity={1.0}
-                          to="#4ade80" toOpacity={0.5}
-                          rotate="0" vertical={true}  />
-          <LinearGradient id={"gradient-c3"}
-                          from="purple" fromOpacity={1.0}
-                          to="violet" toOpacity={1.0}
-                          rotate="0" vertical={true}  />
-
-          <AreaStack
-            top={margin.top}
-            left={margin.left}
-            keys={areaKeys}
-            data={areaData}
-            x={(d) => logScale(getAreaX(d.data)) ?? 0}
-            y0={(d) => yScale(getAreaY0(d)) ?? 0}
-            y1={(d) => yScale(getAreaY1(d)) ?? 0}
-          >
-            {({ stacks, path }) =>
-              stacks.map((stack) => (
-                <path
-                  key={`stack-${stack.key}`}
-                  d={path(stack) || ''}
-                  stroke="transparent"
-                  // fill="url(#stacked-area-orangered)"
-                  //fill={areaColors[stack.key]}
-                  fill={`url(#gradient-${stack.key})`}
-                  opacity={0.5}
-                />
-              ))
-            }
-          </AreaStack>
 
           {/*c1 line*/}
           <LinePath
-            data={extendedCurveData}
+            data={pdc.breakdown.alactic}
             curve={curveBasis}
-            x={(d) => logScale(getX(d)) ?? 0}
-            y={(d) => yScale(getC1(d)) ?? 0}
+            x={(d:number, index:number) => logScale(index + 1) ?? d}
+            y={(d) => yScale(d) ?? 0}
             stroke="teal"
             strokeWidth={2.5}
             strokeOpacity={0.8}
             strokeDasharray="1,8"
           />
-
-          {/*c2 line*/}
           <LinePath
             data={extendedCurveData}
             curve={curveBasis}
-            x={(d) => logScale(getX(d)) ?? 0}
-            y={(d) => yScale(getC2(d)) ?? 0}
+            x={(d) => logScale(d.x) ?? 0}
+            y={(d) => yScale(d.c1) ?? 0}
+            stroke="black"
+            strokeWidth={1}
+            strokeOpacity={0.8}
+            //strokeDasharray="1,8"
+          />
+          {(Math.round(optimizedParams.paadec*100)/100 <= -3) ? (
+            <AreaClosed
+              data={extendedCurveData}
+              x={(d) => logScale(d.x) ?? 0}
+              y={(d) => yScale(d.c1) ?? 0}
+              yScale={yScale}
+              //strokeWidth={1}
+              //stroke="black"
+              fill="red"
+              opacity={0.1}
+            />
+          ) : (<div></div>)}
+
+          {/*c2 line*/}
+          <LinePath
+            data={pdc.breakdown.anaerobic}
+            curve={curveBasis}
+            x={(d:number, index:number) => logScale(index + 1) ?? d}
+            y={(d) => yScale(d) ?? 0}
             stroke="#10b981"
             strokeWidth={2.5}
             strokeOpacity={0.8}
             strokeDasharray="1,8"
           />
-
-          {/*c3 line*/}
           <LinePath
             data={extendedCurveData}
             curve={curveBasis}
-            x={(d) => logScale(getX(d)) ?? 0}
-            y={(d) => yScale(getC3(d)) ?? 0}
+            x={(d) => logScale(d.x) ?? 0}
+            y={(d) => yScale(d.c2) ?? 0}
+            stroke="black"
+            strokeWidth={1}
+            strokeOpacity={0.8}
+            //strokeDasharray="1,8"
+          />
+          {(Math.round(optimizedParams.tau*100)/100 <= 0.51) ? (
+            <AreaClosed
+              data={extendedCurveData}
+              x={(d) => logScale(d.x) ?? 0}
+              y={(d) => yScale(d.c2) ?? 0}
+              yScale={yScale}
+              //strokeWidth={1}
+              //stroke="black"
+              fill="red"
+              opacity={0.1}
+            />
+          ) : (<div></div>)}
+
+          {/*c3 line*/}
+          <LinePath
+            data={pdc.breakdown.aerobic}
+            curve={curveBasis}
+            x={(d:number, index:number) => logScale(index + 1) ?? d}
+            y={(d) => yScale(d) ?? 0}
             stroke={"purple"}
             strokeWidth={2.5}
             strokeOpacity={0.8}
             strokeDasharray="1,5"
           />
+          <LinePath
+            data={extendedCurveData}
+            curve={curveBasis}
+            x={(d) => logScale(d.x) ?? 0}
+            y={(d) => yScale(d.c3) ?? 0}
+            stroke="black"
+            strokeWidth={1}
+            strokeOpacity={0.8}
+            //strokeDasharray="1,8"
+          />
 
 
           {/*total line*/}
           <LinePath
-            data={extendedCurveData}
+            data={pdc.breakdown.total}
             curve={curveBasis}
-            x={(d) => logScale(getX(d)) ?? 0}
-            y={(d) => yScale(getTotal(d)) ?? 0}
+            x={(d:number, index:number) => logScale(index + 1) ?? d}
+            y={(d) => yScale(d) ?? 0}
             stroke="purple"
             strokeWidth={3.0}
             strokeOpacity={0.5}
+          />
+          <LinePath
+            data={extendedCurveData}
+            curve={curveBasis}
+            x={(d) => logScale(d.x) ?? 0}
+            y={(d) => yScale(d.total) ?? 0}
+            stroke="black"
+            strokeWidth={1}
+            strokeOpacity={0.8}
+            //strokeDasharray="1,8"
           />
 
           {/*cp dots (yellow)*/}
@@ -419,40 +460,8 @@ export default function ExtendedEstimation({ width, height, mmpData, initialPara
             />
           ))}
 
-          {/*cp solution*/}
-          <LinePath
-            data={cpCurveData}
-            curve={curveBasis}
-            x={(d) => logScale(getCPX(d)) ?? 0}
-            y={(d) => yScale(getCPY(d)) ?? 0}
-            stroke="black"
-            strokeWidth={1.5}
-            strokeOpacity={0.8}
-            strokeDasharray="1,2"
-          />
-
-          {/*cp line and text*/}
-          <line
-            x1={logScale(minT)}
-            x2={logScale(maxT)}
-            y1={yScale(cpSolution.CP)}
-            y2={yScale(cpSolution.CP)}
-            stroke={'black'}
-          />
-          <text
-            x={-20}
-            y={yScale(cpSolution.CP) + 6}
-            fontSize={12}
-            fill={'black'}
-            fillOpacity={0.9}
-            fontWeight={600}
-          >CP
-          </text>
-
         </Group>
-
       </svg>
     </div>
   )
-
 }

@@ -1,12 +1,10 @@
 import { pt_model } from "./calculations_pt.ts";
-import { extended_model } from "./calculations_extended.ts";
+import { extended_model, plotC1, plotC2, plotC3 } from "./calculations_extended.ts";
 import {
   ExtendedSolution,
   MMPDataPoint,
   PTSolution
 } from "../types/interfaces.ts"
-
-
 
 export const lossPT = (
     params: PTSolution,
@@ -34,8 +32,32 @@ export const lossExtended = (
     mse += Math.pow(predicted - data[i].power, 2);
   }
   //console.log(mse);
-  //return mse / data.length;
-  return mse;
+  return mse / data.length;
+  //return mse;
+}
+
+export const lossExtendedComponents = (
+  params: ExtendedSolution,
+  data: MMPDataPoint[],
+): number => {
+  let mse: number = 0;
+
+  for (let i: number = 0; i < data.length; i++) {
+    const predictedC1 = plotC1(data[i].time, params.paa, params.paadec);
+    const c1 = data[i].c1 ?? 0;
+    mse += Math.pow(predictedC1 - c1, 2);
+
+    const predictedC2 = plotC2(data[i].time, params.cp, params.tau, params.taudel, params.cpdel, params.cpdec, params.cpdecdel);
+    const c2 = data[i].c2 ?? 0;
+    mse += Math.pow(predictedC2 - c2, 2);
+
+    const predictedC3 = plotC3(data[i].time, params.cp, params.taudel, params.cpdel, params.cpdec, params.cpdecdel);
+    const c3 = data[i].c3 ?? 0;
+    mse += Math.pow(predictedC3 - c3, 2);
+  }
+  //console.log(mse);
+  return mse / data.length;
+  //return mse;
 }
 
 // Example using a simple gradient descent
@@ -219,9 +241,9 @@ export const gradientDescentExtended = (
 
       i = iterations
 
-    } else if(mseCurrent < 0.005){
+    } else if(mseCurrent < 0.00005){
       //good luck getting this perfect!!!
-      console.log(`stopping iterations at ${i} for mse under 0.005`)
+      console.log(`stopping iterations at ${i} for mse under 0.00005`)
       i = iterations
     } else if (i != iterations - 1) {
       mseLast = mseCurrent;
@@ -235,7 +257,7 @@ export const gradientDescentExtended = (
     if (j === "paa") {
       params[j] = Math.round(params[j]*100)/100;
     } else {
-      params[j] = Math.round(params[j]*1000)/1000;
+      params[j] = Math.round(params[j]*10000)/10000;
     }
   }
 
@@ -246,7 +268,7 @@ export const gradientDescentExtended = (
     iterations  : finalIterationCount,
     mse0        : Math.round(mse0 * 10000) / 10000,
     mseStop     : Math.round(mse * 10000000) / 10000000,
-    mseEffective: Math.round(mseRound * 10000) / 10000,
+    mseEffective: Math.round(mseRound * 10000000) / 10000000,
     msePrev     : Math.round(mseLast * 10000000) / 10000000,
   };
 }

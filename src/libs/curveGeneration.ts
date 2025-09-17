@@ -14,10 +14,11 @@ import { plotC1, plotC2, plotC3 } from "./calculations_extended.ts";
 
 export const createPointData = (
   mmpData: MMPDataPoint[],
+  color: string = 'black',
 ): DataPoint[] => {
   const dataPoints: DataPoint[] = [];
   for (const row in mmpData) {
-    dataPoints.push(generatePointRow(mmpData[row].time, mmpData[row].power, 'black'));
+    dataPoints.push(generatePointRow(mmpData[row].time, mmpData[row].power, color));
   }
   return dataPoints
 };
@@ -136,6 +137,20 @@ export const generateExtendedCurveData =(
   );
 }
 
+export const generateExtendedCurveDataFromOne =(
+  extendedSolution: ExtendedSolution,
+  maxT: number,
+  tStep: number,
+):ExtendedLinePoint[] => {
+
+  const stepsUnderFirstStep = tStep - 1;
+
+  const arrayCount = Math.floor(maxT / tStep) + stepsUnderFirstStep;
+  return new Array(arrayCount).fill(null).map((_, i) =>
+    generateExtendedCurveRow(i, extendedSolution, 0, tStep)
+  );
+}
+
 export const generateExtendedCurveRow = (
   x: number,
   extendedSolution: ExtendedSolution,
@@ -143,7 +158,17 @@ export const generateExtendedCurveRow = (
   tStep: number,
 ): ExtendedLinePoint => {
 
-  const t: number = minT + x * tStep;
+  let t = minT + x * tStep;
+
+  if (minT === 0) {
+    //add steps below tStep
+    if (x < tStep) {
+      t = x + 1;
+    } else {
+      t = tStep + (x + 1 - tStep) * tStep;
+    }
+  }
+
   const c1: number = plotC1(
     t,
     extendedSolution.paa,

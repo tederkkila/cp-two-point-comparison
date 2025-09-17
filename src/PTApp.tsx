@@ -49,6 +49,14 @@ const tedMMPData: MMPDataPoint[] = [
   { time: 3*3600+40*60+50, power: 261 },
 ]
 
+const tedStrydExtMMPData: MMPDataPoint[] = [
+  { time: 60, power: 451.91 },
+  { time: 180, power: 348.81 },
+  { time: 300, power: 325.8 },
+  { time: 20*60, power: 283.6 },
+  { time: 60*60, power: 267.66 },
+]
+
 const asyaMMPData: MMPDataPoint[] = [
   { time: 120, power: 220 + 30 }, //underperformed
   { time: 1231, power: 192 },
@@ -112,7 +120,19 @@ const yiqiaoMMPData: MMPDataPoint[] = [
   { time: 19*60 + 34, power: 341, distance: 4910},
   { time: 35*60 + 25, power: 335, distance: 10090},
   { time: 60*60, power: 272, },
+]
 
+const michaelMMPData: MMPDataPoint[] = [
+  { time: 178, power: 370, distance: 850},
+  { time: 715, power: 324, distance: 2950},
+  { time: 20*60, power: 311, distance: 4940},
+]
+
+const masahiroMMPData: MMPDataPoint[] = [
+  { time: 10, power: 438,},
+  { time: 302, power: 319,},
+  { time: 60*10+55, power: 297,},
+  { time: 38*60 + 33, power: 280, distance: 10000},
 ]
 
 const datasets = {
@@ -121,6 +141,7 @@ const datasets = {
   henryB: {data: henryMMPDataB, kg:75},
   henryC: {data: henryMMPDataC, kg:75},
   ted: {data: tedMMPData, kg:78},
+  tedStrydExt: {data: tedStrydExtMMPData, kg:78},
   asya: {data: asyaMMPData, kg:65},
   magnus: {data: magnusMMPData, kg:88},
   dimasA: {data: dimasAMMPData, kg:77},
@@ -130,6 +151,8 @@ const datasets = {
   mp: {data: mpMMPData, kg:61},
   vanhatalo: {data: vanhataloMMPData, kg:61},
   yiqiao: {data: yiqiaoMMPData, kg:61},
+  michael: {data: michaelMMPData, kg:61},
+  masahiro: {data: masahiroMMPData, kg:61},
 }
 
 const initialParamsDefault: PTSolution = {
@@ -151,7 +174,7 @@ const distanceMeters = {
 
 function PTApp() {
 
-  const currentDataset = datasets.yiqiao
+  const currentDataset = datasets.masahiro
   const [mmpData, setMMPData] = useState<MMPDataPoint[]>(currentDataset.data);
 
   const kg: number = currentDataset.kg;

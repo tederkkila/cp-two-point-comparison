@@ -40,3 +40,18 @@
 .read-the-docs {
   color: #888;
 }
+
+input[type="file"]::file-selector-button {
+  background-color: #007bff; /* Example background color */
+  color: white; /* Example text color */
+  padding: 10px 20px; /* Example padding */
+  border: none; /* Remove default border */
+  border-radius: 5px; /* Example rounded corners */
+  cursor: pointer; /* Change cursor on hover */
+  /* Add other desired CSS properties */
+}
+
+/* Optional: Style the hover state */
+input[type="file"]::file-selector-button:hover {
+  background-color: #0056b3;
+}
