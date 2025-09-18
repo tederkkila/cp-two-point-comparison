@@ -5,6 +5,7 @@ import AutoCPComponents from "./components/AutoCPComponents.tsx";
 import { ExtendedSolution, MMPDataPoint, StrydPDC } from "./types/interfaces.ts";
 import AutoCPGC from "./components/AutoCPGC.tsx";
 import StrydAutoCPSideBar from "./components/StrydAutoCPSidebar.tsx";
+import { Analytics } from "@vercel/analytics/react";
 
 const initialParamsDefault: ExtendedSolution = {
   cp      : 300,
@@ -150,6 +151,7 @@ function StrydAutoCPApp() {
         </div>
 
       </div>
+    <Analytics />
     </main>
   )
 }
