@@ -201,9 +201,6 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
       verbose,
     )
 
-
-  // return gcParams
-
   }, [functionalData, powerArray, verbose])
 
   const finalIterations = gcSolution.iterations;

@@ -1,4 +1,4 @@
-import { ExtendedSolution, MMPDataPoint } from "../types/interfaces.ts";
+import { ExtendedSolution, ExtendedSolutionIterated, MMPDataPoint } from "../types/interfaces.ts";
 
 // P = paa* exp(paa_dec*(x/60)^z) + ecp * (1-exp(tau_del*x/60)) * (1-exp(ecp_del*x/60)) * (1+ecp_dec*exp(-180/x/60) (1 + etau/(x/60))
 
@@ -304,7 +304,7 @@ export const iterateExtendedParams = (
   params: ExtendedSolution,
   modelVersion: number = 5,
   verbose: boolean = false,
-): ExtendedSolution => {
+): ExtendedSolutionIterated => {
 
   const deltaMax_tau = 0.0001;
   const deltaMax_paa = 0.01;
