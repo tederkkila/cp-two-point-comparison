@@ -122,6 +122,13 @@ const masahiroMMPData: MMPDataPoint[] = [
   { time: 38*60 + 33, power: 280, distance: 10000},
 ]
 
+const jeffMMPData: MMPDataPoint[] = [
+  { time: 233, power: 364,},
+  { time: 992, power: 316,},
+  { time: 1217, power: 314,},
+  { time: 653, power: 330},
+]
+
 const datasets = {
   default  : { data: defaultMMPData, kg: 75 },
   henryA   : { data: henryMMPDataA, kg: 75 },
@@ -138,6 +145,7 @@ const datasets = {
   vanhatalo: { data: vanhataloMMPData, kg: 61 },
   yiqiao: {data: yiqiaoMMPData, kg:61},
   masahiro: {data: masahiroMMPData, kg:61},
+  jeff: {data: jeffMMPData, kg:61},
 
 }
 
@@ -172,7 +180,7 @@ const initialParamsDefault: ExtendedSolution = {
 
 function ExtendedApp() {
 
-  const currentDataset = datasets.masahiro
+  const currentDataset = datasets.jeff
   const [mmpData, setMMPData] = useState<MMPDataPoint[]>(currentDataset.data);
 
   const kg: number = currentDataset.kg;
