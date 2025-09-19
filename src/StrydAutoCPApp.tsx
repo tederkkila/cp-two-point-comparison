@@ -6,6 +6,7 @@ import { ExtendedSolution, MMPDataPoint, StrydPDC } from "./types/interfaces.ts"
 import AutoCPGC from "./components/AutoCPGC.tsx";
 import StrydAutoCPSideBar from "./components/StrydAutoCPSidebar.tsx";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 const initialParamsDefault: ExtendedSolution = {
   cp      : 300,
@@ -45,7 +46,7 @@ function StrydAutoCPApp() {
   const [receivedPDC, setReceivedPDC] = useState<StrydPDC | null>(null);
 
   const handleFileFromChild = (data: JSON) => {
-    console.log('Received JSON data from child:', data);
+    //console.log('Received JSON data from child:', data);
     //absolutely NOT validated conversion of jsonData to object
     const jsonString = JSON.stringify(data);
     const parsedPDC: StrydPDC = JSON.parse(jsonString);
@@ -151,7 +152,8 @@ function StrydAutoCPApp() {
         </div>
 
       </div>
-    <Analytics />
+      <Analytics />
+      <SpeedInsights />
     </main>
   )
 }

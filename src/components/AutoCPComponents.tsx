@@ -268,7 +268,7 @@ export default function AutoCPComponents({ width, height, pdc, initialParams, ve
           <AxisLeft scale={yScale} />
 
           {/*axis and title*/}
-          <text x={20} y={-10} fontSize={16} fillOpacity={0.4}>[ GC Extended CP / 2-point CP | iterations: {finalIterations} ] </text>
+          <text x={10} y={-15} fontSize={16} fillOpacity={0.4}>[ Stryd Solution / X-point CP | iterations: {finalIterations} ] </text>
           <text x="-70" y="15" transform="rotate(-90)" fontSize={10}>Power (Watts)</text>
           <text x={width - 200} y={height - 100} fontSize={10}>Time (seconds)</text>
           <text x={logScale(cpValidTimeMin) + 10} y={18} fontSize={10}>
@@ -276,39 +276,63 @@ export default function AutoCPComponents({ width, height, pdc, initialParams, ve
           </text>
 
           {/*key*/}
+          <Group left={width-190} top={margin.top -3}>
+            {/*model results*/}
+            <Group left={0} top={-2}>
+              <text x={0} y={0} style={{ fontWeight: 700 }}>Extended CP</text>
+              <line x1={-13} x2={-2} y1={-4} y2={-4}
+                    stroke={'purple'}
+                    strokeWidth={1.5}
+              />
+            </Group>
+            <Group left={0} top={14}>
+              <text x={0} y={0}>CP: {Math.round(optimizedParams.cp * 100) / 100} W</text>
+              <line x1={-13} x2={-2} y1={-4} y2={-4}
+                    stroke={'purple'}
+                    strokeWidth={2}
+                    strokeOpacity={0.8}
+                    strokeDasharray="2,2"
+              />
+            </Group>
 
-          {/*model results*/}
-          <text x={width - 190} y="25" style={{ fontWeight: 700 }}>Extended CP</text>
-          <line x1={width - 190 -13} x2={width - 190 - 2} y1={19} y2={19}
-                stroke={'purple'}
-                strokeWidth={1.5}
-          />
-          <text x={width - 190} y="45">CP: {Math.round(optimizedParams.cp * 100) / 100} W</text>
-          <line x1={width - 190 -13} x2={width - 190 - 2} y1={39} y2={39}
-                stroke={'purple'}
-                strokeWidth={2}
-                strokeOpacity={0.8}
-                strokeDasharray="2,2"
-          />
-          <text x={width - 190} y="60">paa: {Math.round(optimizedParams.paa)} j</text>
-          <line x1={width - 190 -13} x2={width - 190 - 2} y1={54} y2={54}
-                stroke="#164e63" //cyan-900
-                strokeWidth={1.5}
-                strokeOpacity={3.0}
-                strokeDasharray="2,2"
-          />
-          <text x={width - 190} y="75">tau: {Math.round(optimizedParams.tau * 1000) / 1000}</text>
+            <Group left={0} top={2*14}>
+              <text x={0} y={0}>paa: {Math.round(optimizedParams.paa)} j</text>
+              <line x1={-13} x2={-2} y1={-4} y2={-4}
+                    stroke="#164e63" //cyan-900
+                    strokeWidth={1.5}
+                    strokeOpacity={3.0}
+                    strokeDasharray="2,2"
+              />
+            </Group>
 
-          <text x={width - 190} y="90">W': {Math.round(optimizedParams.cp * optimizedParams.tau * 60)} j</text>
-          {/*<text x={width - 190} y="105">CPdecdel: {Math.round(-optimizedParams.cpdecdel)}</text>*/}
-          {(Math.round(optimizedParams.paadec*100)/100 <= -2.95) ? (
-            <text stroke={'red'} x={width - 190} y="105">paadec: {Math.round(optimizedParams.paadec * 100)/100}</text>
+            <Group left={0} top={3*14}>
+              <text x={0} y={0}
+                    fill={(Math.round(optimizedParams.paadec*100)/100 <= -2.95) ? 'red' : 'default'}
+              >paadec: {Math.round(optimizedParams.paadec * 100)/100}</text>
+            </Group>
 
-          ) : (
-            <text x={width - 190} y="105">paadec: {Math.round(optimizedParams.paadec * 100)/100}</text>
-          )}
-          <text x={width - 190} y="120">CPdec: {Math.round(optimizedParams.cpdec*100)/100} </text>
+            <Group left={0} top={4*14}>
+              <text x={0} y={0}
+                    fill={(Math.round(optimizedParams.tau*100)/100 <= 0.51) ? 'red' : 'default'}
+              >tau: {Math.round(optimizedParams.tau * 1000) / 1000}</text>
+              <line x1={-13} x2={-2} y1={-4} y2={-4}
+                    stroke={'#10b981'}
+                    strokeWidth={2}
+                    strokeOpacity={0.9}
+                    strokeDasharray="2,2"
+              />
+            </Group>
 
+            <Group left={0} top={5*14}>
+              <text x={0} y={0}>W': {Math.round(optimizedParams.cp * optimizedParams.tau * 60)} j</text>
+            </Group>
+
+            <Group left={0} top={6*14}>
+              <text x={0} y={0}>CPdec: {Math.round(optimizedParams.cpdec*100)/100}</text>
+            </Group>
+
+
+          </Group>
           {/*cp results*/}
           <text x={width - 190} y="140" style={{ fontWeight: 700 }}>2-point CP</text>
           <line x1={width - 190 -13} x2={width - 190 - 2} y1={134} y2={134}

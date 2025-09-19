@@ -45,7 +45,7 @@ export type PTEstimationProps = {
   margin?: { top: number; right: number; bottom: number; left: number };
 }
 
-export interface ExtendedSolution extends Record<string, number> {
+export interface ExtendedSolution extends Record<string, number | undefined> {
   cp: number;
   cpdec: number;
   cpdecdel: number;
@@ -54,6 +54,7 @@ export interface ExtendedSolution extends Record<string, number> {
   paadec: number;
   tau: number;
   taudel: number;
+  iterations?:number;
 }
 
 export interface ExtendedLinePoint {

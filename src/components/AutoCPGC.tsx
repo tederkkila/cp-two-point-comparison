@@ -188,7 +188,7 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
     params.cp = 300;
     params.cpdec = -0.6;
 
-    const maxLoops = 15;
+    const maxLoops = 25;
     const modelVersion = 5; //use 5!
 
     return iterateExtendedParams (
@@ -206,13 +206,16 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
 
   }, [functionalData, powerArray, verbose])
 
-  const finalIterations = NaN;
+  const finalIterations = gcSolution.iterations;
   console.log({...gcSolution});
   optimizedParams = gcSolution
 
   const extendedCurveData = generateExtendedCurveDataFromOne(optimizedParams, maxT, tStep);
   //const extendedPointData = createPointData(userData);
-  const functionalPointData = createPointData(functionalData);
+
+  //remove missing data
+  const functionalDataFiltered = functionalData.filter(value => value.time !== 0)
+  const functionalPointData = createPointData(functionalDataFiltered);
 
 
   //const areaKeys = ['c1', 'c2', 'c3'];
@@ -250,88 +253,121 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
       <svg width={width} height={height}>
         <rect x={0} y={0} width={width} height={height} fill={background} rx={14}/>
         <Group left={margin.left} top={margin.top}>
-          <GridColumns scale={logScale} width={xMax} height={yMax} stroke="#e0e0e0"/>
-          <GridRows scale={yScale} width={xMax} height={yMax} stroke={'#222'} strokeOpacity={0.5}/>
+          <GridColumns scale={logScale} width={xMax} height={yMax} stroke={'#222'} strokeOpacity={0.05}/>
+          <GridRows scale={yScale} width={xMax} height={yMax} stroke={'#222'} strokeOpacity={0.05}/>
           <AxisBottom top={yMax} scale={logScale} numTicks={width > 520 ? 10 : 5}/>
           <AxisLeft scale={yScale} />
 
           {/*axis and title*/}
-          <text x={20} y={-10} fontSize={16} fillOpacity={0.4}>[ GC Extended CP | iterations: {finalIterations} ] </text>
+          <text x={10} y={-15} fontSize={16} fillOpacity={0.4}>[ GC Extended CP | iterations: {finalIterations} ] </text>
           <text x="-70" y="15" transform="rotate(-90)" fontSize={10}>Power (Watts)</text>
           <text x={width - 200} y={height - 100} fontSize={10}>Time (seconds)</text>
 
 
           {/*key*/}
+          <Group left={width-190} top={margin.top -3}>
+            {/*model results*/}
+            <Group left={0} top={-2}>
+              <text x={0} y={0} style={{ fontWeight: 700 }}>Extended CP</text>
+              <line x1={-13} x2={-2} y1={-4} y2={-4}
+                    stroke={'purple'}
+                    strokeWidth={1.5}
+              />
+            </Group>
+            <Group left={0} top={14}>
+              <text x={0} y={0}>CP: {Math.round(optimizedParams.cp * 100) / 100} W</text>
+              <line x1={-13} x2={-2} y1={-4} y2={-4}
+                    stroke={'purple'}
+                    strokeWidth={2}
+                    strokeOpacity={0.8}
+                    strokeDasharray="2,2"
+              />
+            </Group>
 
-          {/*model results*/}
-          <text x={width - 190} y="25" style={{ fontWeight: 700 }}>Extended CP</text>
-          <line x1={width - 190 -13} x2={width - 190 - 2} y1={19} y2={19}
-                stroke={'purple'}
-                strokeWidth={1.5}
-          />
-          <text x={width - 190} y="45">CP: {Math.round(optimizedParams.cp * 100) / 100} W</text>
-          <line x1={width - 190 -13} x2={width - 190 - 2} y1={39} y2={39}
-                stroke={'purple'}
-                strokeWidth={2}
-                strokeOpacity={0.8}
-                strokeDasharray="2,2"
-          />
-          <text x={width - 190} y="60">paa: {Math.round(optimizedParams.paa)} j</text>
-          <line x1={width - 190 -13} x2={width - 190 - 2} y1={54} y2={54}
-                stroke="#164e63" //cyan-900
-                strokeWidth={1.5}
-                strokeOpacity={3.0}
-                strokeDasharray="2,2"
-          />
-          <text x={width - 190} y="75">tau: {Math.round(optimizedParams.tau * 1000) / 1000}</text>
+            <Group left={0} top={2*14}>
+              <text x={0} y={0}>paa: {Math.round(optimizedParams.paa)} j</text>
+              <line x1={-13} x2={-2} y1={-4} y2={-4}
+                    stroke="#164e63" //cyan-900
+                    strokeWidth={1.5}
+                    strokeOpacity={3.0}
+                    strokeDasharray="2,2"
+              />
+            </Group>
 
-          <text x={width - 190} y="90">W': {Math.round(optimizedParams.cp * optimizedParams.tau * 60)} j</text>
-          {(Math.round(optimizedParams.paadec*100)/100 <= -2.95) ? (
-            <text stroke={'red'} x={width - 190} y="105">paadec: {Math.round(optimizedParams.paadec * 100)/100}</text>
+            <Group left={0} top={3*14}>
+              <text x={0} y={0}
+              fill={(Math.round(optimizedParams.paadec*100)/100 <= -2.95) ? 'red' : 'default'}
+              >paadec: {Math.round(optimizedParams.paadec * 100)/100}</text>
+            </Group>
 
-          ) : (
-            <text x={width - 190} y="105">paadec: {Math.round(optimizedParams.paadec * 100)/100}</text>
-          )}
-          <text x={width - 190} y="120">CPdec: {Math.round(optimizedParams.cpdec*100)/100} </text>
+            <Group left={0} top={4*14}>
+              <text x={0} y={0}
+              fill={(Math.round(optimizedParams.tau*100)/100 <= 0.51) ? 'red' : 'default'}
+              >tau: {Math.round(optimizedParams.tau * 1000) / 1000}</text>
+              <line x1={-13} x2={-2} y1={-4} y2={-4}
+                    stroke={'#10b981'}
+                    strokeWidth={2}
+                    strokeOpacity={0.9}
+                    strokeDasharray="2,2"
+              />
+            </Group>
+
+            <Group left={0} top={5*14}>
+              <text x={0} y={0}>W': {Math.round(optimizedParams.cp * optimizedParams.tau * 60)} j</text>
+            </Group>
+
+            <Group left={0} top={6*14}>
+              <text x={0} y={0}>CPdec: {Math.round(optimizedParams.cpdec*100)/100}</text>
+            </Group>
+
+
+          </Group>
+
+
 
           {/*Interval Pmax valid area*/}
-          <rect x={logScale(timeIntervals.maxI1)} y={0} width={logScale(timeIntervals.maxI2)-logScale(timeIntervals.maxI1)} height={yMax} fill={'#FF00C7'} fillOpacity={0.1}/>
-          <rect x={logScale(timeIntervals.maxI1)} y={0} width={1} height={yMax} fill={'#FF00C7'} fillOpacity={0.3}/>
-          <rect x={logScale(timeIntervals.maxI2)-1} y={0} width={1} height={yMax} fill={'#FF00C7'} fillOpacity={0.3}/>
+          <rect x={logScale(timeIntervals.maxI1)} y={0} width={logScale(timeIntervals.maxI2)-logScale(timeIntervals.maxI1)} height={yMax} fill={'#FF00C7'} fillOpacity={0.05}/>
+          <rect x={logScale(timeIntervals.maxI1)} y={0} width={1} height={yMax} fill={'#FF00C7'} fillOpacity={0.2}/>
+          <rect x={logScale(timeIntervals.maxI2)-1} y={0} width={1} height={yMax} fill={'#FF00C7'} fillOpacity={0.2}/>
           <text x={logScale(timeIntervals.maxI1) + 10} y={10} fontSize={10}>
-            Paa ({timeIntervals.maxI1}-{timeIntervals.maxI2}s)
+            <tspan x={logScale(timeIntervals.maxI1) + 5}>Paa</tspan>
+            <tspan x={logScale(timeIntervals.maxI1) + 5} dy={10}>{timeIntervals.maxI1}-{timeIntervals.maxI2}s</tspan>
           </text>
 
           {/*Interval SAN valid area*/}
-          <rect x={logScale(timeIntervals.sanI1)} y={0} width={logScale(timeIntervals.sanI2)-logScale(timeIntervals.sanI1)} height={yMax} fill={'#a600ff'} fillOpacity={0.1}/>
-          <rect x={logScale(timeIntervals.sanI1)} y={0} width={1} height={yMax} fill={'#a600ff'} fillOpacity={0.3}/>
-          <rect x={logScale(timeIntervals.sanI2)-1} y={0} width={1} height={yMax} fill={'#a600ff'} fillOpacity={0.3}/>
+          <rect x={logScale(timeIntervals.sanI1)} y={0} width={logScale(timeIntervals.sanI2)-logScale(timeIntervals.sanI1)} height={yMax} fill={'#a600ff'} fillOpacity={0.05}/>
+          <rect x={logScale(timeIntervals.sanI1)} y={0} width={1} height={yMax} fill={'#a600ff'} fillOpacity={0.2}/>
+          <rect x={logScale(timeIntervals.sanI2)-1} y={0} width={1} height={yMax} fill={'#a600ff'} fillOpacity={0.2}/>
           <text x={logScale(timeIntervals.sanI1) + 10} y={10} fontSize={10}>
-            Paa delta ({timeIntervals.sanI1}-{timeIntervals.sanI2}s)
+            <tspan x={logScale(timeIntervals.sanI1) + 5}>Paa dec</tspan>
+            <tspan x={logScale(timeIntervals.sanI1) + 5} dy={10}>{timeIntervals.sanI1}-{timeIntervals.sanI2}s</tspan>
           </text>
 
           {/*Interval AN valid area*/}
-          <rect x={logScale(timeIntervals.anI1)} y={0} width={logScale(timeIntervals.anI2)-logScale(timeIntervals.anI1)} height={yMax} fill={'#41A4FF'} fillOpacity={0.15}/>
-          <rect x={logScale(timeIntervals.anI1)} y={0} width={1} height={yMax} fill={'#41A4FF'} fillOpacity={0.3}/>
-          <rect x={logScale(timeIntervals.anI2)-1} y={0} width={1} height={yMax} fill={'#41A4FF'} fillOpacity={0.3}/>
+          <rect x={logScale(timeIntervals.anI1)} y={0} width={logScale(timeIntervals.anI2)-logScale(timeIntervals.anI1)} height={yMax} fill={'#41A4FF'} fillOpacity={0.1}/>
+          <rect x={logScale(timeIntervals.anI1)} y={0} width={1} height={yMax} fill={'#41A4FF'} fillOpacity={0.2}/>
+          <rect x={logScale(timeIntervals.anI2)-1} y={0} width={1} height={yMax} fill={'#41A4FF'} fillOpacity={0.2}/>
           <text x={logScale(timeIntervals.anI1) + 10} y={10} fontSize={10}>
-            Tau ({timeIntervals.anI1}-{timeIntervals.anI2}s)
+            <tspan x={logScale(timeIntervals.anI1) + 5}>Tau</tspan>
+            <tspan x={logScale(timeIntervals.anI1) + 5} dy={10}>{timeIntervals.anI1}-{timeIntervals.anI2}s</tspan>
           </text>
 
           {/*Interval AE valid area*/}
-          <rect x={logScale(timeIntervals.aeI1)} y={0} width={logScale(timeIntervals.aeI2)-logScale(timeIntervals.aeI1)} height={yMax} fill={'#7CDFFF'} fillOpacity={0.2}/>
-          <rect x={logScale(timeIntervals.aeI1)} y={0} width={1} height={yMax} fill={'#4cb7da'} fillOpacity={0.6}/>
-          <rect x={logScale(timeIntervals.aeI2)-1} y={0} width={1} height={yMax} fill={'#4cb7da'} fillOpacity={0.6}/>
+          <rect x={logScale(timeIntervals.aeI1)} y={0} width={logScale(timeIntervals.aeI2)-logScale(timeIntervals.aeI1)} height={yMax} fill={'#7CDFFF'} fillOpacity={0.15}/>
+          <rect x={logScale(timeIntervals.aeI1)} y={0} width={1} height={yMax} fill={'#4cb7da'} fillOpacity={0.4}/>
+          <rect x={logScale(timeIntervals.aeI2)-1} y={0} width={1} height={yMax} fill={'#4cb7da'} fillOpacity={0.4}/>
           <text x={logScale(timeIntervals.aeI1) + 10} y={10} fontSize={10}>
-            CP ({timeIntervals.aeI1}-{timeIntervals.aeI2}s)
+            <tspan x={logScale(timeIntervals.aeI1) + 5}>CP</tspan>
+            <tspan x={logScale(timeIntervals.aeI1) + 5} dy={10}>{timeIntervals.aeI1}-{timeIntervals.aeI2}s</tspan>
           </text>
 
           {/*Interval AE valid area*/}
-          <rect x={logScale(timeIntervals.laeI1)} y={0} width={logScale(timeIntervals.laeI2)-logScale(timeIntervals.laeI1)} height={yMax} fill={'#727478'} fillOpacity={0.15}/>
-          <rect x={logScale(timeIntervals.laeI1)} y={0} width={1} height={yMax} fill={'#727478'} fillOpacity={0.5}/>
-          <rect x={logScale(timeIntervals.laeI2)-1} y={0} width={1} height={yMax} fill={'#727478'} fillOpacity={0.5}/>
+          <rect x={logScale(timeIntervals.laeI1)} y={0} width={logScale(timeIntervals.laeI2)-logScale(timeIntervals.laeI1)} height={yMax} fill={'#727478'} fillOpacity={0.1}/>
+          <rect x={logScale(timeIntervals.laeI1)} y={0} width={1} height={yMax} fill={'#727478'} fillOpacity={0.4}/>
+          <rect x={logScale(timeIntervals.laeI2)-1} y={0} width={1} height={yMax} fill={'#727478'} fillOpacity={0.4}/>
           <text x={logScale(timeIntervals.laeI1) + 10} y={10} fontSize={10}>
-            CP dec ({timeIntervals.laeI1}-{timeIntervals.laeI2}s)
+            <tspan x={logScale(timeIntervals.laeI1) + 5}>CP dec</tspan>
+            <tspan x={logScale(timeIntervals.laeI1) + 5} dy={10}>{timeIntervals.laeI1}-{timeIntervals.laeI2}s</tspan>
           </text>
 
 
@@ -462,8 +498,8 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
               r={1}
               fill={point.color}
               fillOpacity={0.9}
-
             />
+
           ))}
           {/*{extendedPointData.map((point, i) => (*/}
           {/*  <Circle*/}
@@ -477,15 +513,22 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
           {/*  />*/}
           {/*))}*/}
           {functionalPointData.map((point, i) => (
-            <Circle
+              <Circle
               key={`fpoint-${i}`}
               className="dot"
               cx={logScale(pointX(point))}
               cy={yScale(pointY(point))}
               r={3}
               fill={'green'}
-
             />
+          ))}
+          {functionalPointData.map((point, i) => (
+            <text
+              key={`fpointText-${i}`}
+              fontSize={9}
+              x={logScale(pointX(point)) + 2}
+              y={yScale(pointY(point)) - 4}
+            >({point.x}, {Math.round(point.y)})</text>
           ))}
 
         </Group>

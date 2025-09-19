@@ -114,8 +114,8 @@ export const plotFull = (
     ;
   } else if (version == 6) {
     power = (params.paa * (1.10 - 0.10 * Math.exp(-8 * x)) * Math.exp(params.paadec * x))
-      + (params.ecp
-        * (1 + params.cpdec * Math.exp(params.cpdec_del/(x)))
+      + (params.cp
+        * (1 + params.cpdec * Math.exp(params.cpdecdel/(x)))
         * (1 * (1 - Math.exp(params.cpdel * x)) + Math.pow((1 - Math.exp(params.taudel * x)),2) * params.tau/(x))
       )
     ;
@@ -319,6 +319,11 @@ export const iterateExtendedParams = (
       break;
     }
 
+    functionalData.forEach((value) => {
+      value.time = 0;
+      value.power = 0;
+    })
+
     const previousParams = {...params};
 
     if (verbose) console.log (`*** Current iteration: ${iteration}`, "cp", params.cp, "tau", params.tau);
@@ -365,6 +370,7 @@ export const iterateExtendedParams = (
     let avg_paadec = 0;
     let count_paadec = 1;
     params.paadec = min_paadec; //drop value for iteration to min
+
     for (let i: number = timeIntervals.sanI1; i <= timeIntervals.sanI2; i++) {
 
       const i_paadec = solve_paadec(i, powerArray[i-1], { ...params }, modelVersion);
@@ -382,7 +388,6 @@ export const iterateExtendedParams = (
     }
 
     if (verbose)console.log(iteration, "params.paadec", params.paadec, previousParams.paadec, params.paadec - previousParams.paadec);
-
 
     // SOLVE FOR PAA [max power]
     let avg_paa = 0;
@@ -447,21 +452,21 @@ export const iterateExtendedParams = (
       if (
         Math.abs(params.tau - previousParams.tau) < deltaMax_tau
       ) {
-        if (verbose) console.log("Breaking loop for minimum change tau.", params.tau);
+        console.log("Breaking loop for minimum change tau.", params.tau);
         breakForDeltaMax = true;
       }
 
       if (
         Math.abs(params.paadec - previousParams.paadec) < deltaMax_paadec
       ) {
-        if (verbose) console.log("Breaking loop for minimum change paadec.", params.paadec);
+        console.log("Breaking loop for minimum change paadec.", params.paadec);
         //breakForDeltaMax = true;
       }
 
       if (
         Math.abs(params.paa - previousParams.paa) < deltaMax_paa
       ) {
-        if (verbose) console.log("Breaking loop for minimum change paa.", params.paa);
+        console.log("Breaking loop for minimum change paa.", params.paa);
         breakForDeltaMax = true;
       }
 
@@ -475,5 +480,5 @@ export const iterateExtendedParams = (
 
   }
 
-  return params
+  return {...params, iterations: iteration}
 }
