@@ -145,7 +145,7 @@ function StrydAutoCPApp() {
             ) : (
               <div>
                 <p>Please upload a valid pdc.json file!</p>
-                <p>Need help? Here are <a href="/src/StrydInstructions"
+                <p>Need help? Here are <a href="/strydinstructions"
                                                                  className="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
                   Instructions
                   <svg className="w-4 h-4 ms-2 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
