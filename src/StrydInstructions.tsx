@@ -33,7 +33,7 @@ function StrydInstructions() {
             <li>right-click on the screen and choose "inspect"</li>
             <li>or, press &lt;function key&gt; + F12</li>
           </ul>
-          <img src={"/screenshots/opentools.png"} alt={"Screenshot of opening tools"}/>
+          <img className={"w-full xl:w-1/2"} src={"/screenshots/opentools.png"} alt={"Screenshot of opening tools"}/>
 
           <h3 className="text-l font-bold mt-3">Find the pdc file</h3>
           <p>These are the steps to display the content of the pdc file</p>
@@ -44,7 +44,8 @@ function StrydInstructions() {
             <li>Click on the entry 'pdc?include_breakdown=1'</li>
             <li>Select 'Response' tab for this entry</li>
           </ol>
-          <img src={"/screenshots/networkrequest.png"} alt={"Screenshot of network request"}/>
+          <img className={"w-full lg:w-1/2"} src={"/screenshots/networkrequest.png"} alt={"Screenshot of" +
+            " network request"}/>
 
           <h3 className="text-l font-bold mt-3">Save the pdc file</h3>
           <p>Now that you have located the file we need to save the content to your local machine</p>
