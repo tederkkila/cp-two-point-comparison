@@ -56,7 +56,9 @@ function StrydInstructions() {
             <li>Use ctrl+C to copy the text into your pdc.json</li>
             <li>Save your file. The file will be 1-2MB in size</li>
           </ol>
-
+          <p>It looks like some users on Firefox might not be able to copy the file contents because files over 1mb are truncated in the display panel.</p>
+          <p>I don't have a test system but you can try to right click the file name to save as...</p>
+          <p>You can also check this page: https://stackoverflow.com/questions/51687462/firefox-developer-tools-truncates-long-network-response-chrome-does-not-show</p>
 
         <h3 className="text-l font-bold mt-3">You can now use the Styrd AutoCP Model Viewer</h3>
         <p>You now can use this .json file in the viewer</p>
