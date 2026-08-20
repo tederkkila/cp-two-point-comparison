@@ -60,6 +60,8 @@ function AutoCPApp() {
                 pdc={jsonData}
                 initialParams={initialParams}
                 forecastData={[]}
+                modelVersion={5}
+                thresholdGraph={true}
                 verbose={true}
               />
             }</ParentSize>

@@ -6,7 +6,6 @@ import { ExtendedSolution, MMPDataPoint, StrydPDC } from "./types/interfaces.ts"
 import AutoCPGC from "./components/AutoCPGC.tsx";
 import StrydAutoCPSideBar from "./components/StrydAutoCPSidebar.tsx";
 import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/react";
 
 const initialParamsDefault: ExtendedSolution = {
   cp      : 100,
