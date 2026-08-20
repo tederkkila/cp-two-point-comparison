@@ -11,7 +11,7 @@ interface StrydAutoCPSideBarProps {
 
 export default function StrydAutoCPSideBar ({mmpData, setMMPData}:StrydAutoCPSideBarProps)  {
 
-  console.log("Sidebar running...");
+  //console.log("Sidebar running...");
 
   //create dataset for form
   const mmpDataForForm = useMemo(() => {

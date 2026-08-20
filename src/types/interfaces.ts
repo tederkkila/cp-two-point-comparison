@@ -74,6 +74,17 @@ export interface ExtendedLinePoint {
   c3: number;
   total: number;
 }
+export interface ExtendedThresholdLinePoint {
+  x: number;
+  c1: number;
+  c2: number;
+  c3: number;
+  total: number;
+  c1Stryd: number;
+  c2Stryd: number;
+  c3Stryd: number;
+  totalStryd: number;
+}
 
 export type ExtendedEstimationProps = {
   width: number;
@@ -108,6 +119,8 @@ export type AutoCPGCProps = {
   pdc: StrydPDC;
   initialParams: ExtendedSolution;
   forecastData: MMPDataPoint[];
+  thresholdGraph: boolean,
+  modelVersion: number,
   verbose: boolean,
   margin?: { top: number; right: number; bottom: number; left: number };
 }

@@ -23,6 +23,7 @@ interface SideBarProps {
   setLinearData: Dispatch<SetStateAction<LinearGraphData>>;
   expandZones: boolean;
   setExpandZones: Dispatch<SetStateAction<boolean>>;
+  appPath?: string;
 }
 
 // for storing legacy values when test one disabled
@@ -30,7 +31,7 @@ let linearDataPreCheck: LinearGraphData;
 // default state is to not disable Test One (show it)
 let disableTestOne: boolean = false;
 
-export default function SideBar({ linearData, setLinearData, expandZones, setExpandZones }: SideBarProps) {
+export default function SideBar({ linearData, setLinearData, expandZones, setExpandZones, appPath }: SideBarProps) {
   //console.log("rendering sidebar")
 
   //extract params from route (which gets from the path)
@@ -162,6 +163,9 @@ export default function SideBar({ linearData, setLinearData, expandZones, setExp
   useEffect(() => {
     //console.log(`update URL useEffect (disableTestOne: ${disableTestOne})`)
     let path:string = '';
+    if (appPath) {
+      path = appPath;
+    }
     path += `/${linearData.testTwoShortTime}`;
     path += `/${linearData.testTwoShortWatt}`;
     path += `/${linearData.testTwoLongTime}`;

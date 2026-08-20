@@ -30,12 +30,12 @@ const selectedBrushStyle = {
 const getDate = (d: AppleStock) => new Date(d.date);
 const getStockValue = (d: AppleStock) => d.close;
 
-export type BrushProps = {
+interface BrushProps  {
   width: number;
   height: number;
   margin?: { top: number; right: number; bottom: number; left: number };
   compact?: boolean;
-};
+}
 
 function BrushChartExample({
   compact = false,

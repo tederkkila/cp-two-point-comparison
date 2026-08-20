@@ -1,4 +1,4 @@
-import { AutoCPGCProps, ExtendedSolution, MMPDataPoint, DataPoint } from "../types/interfaces.ts";
+import { AutoCPGCProps, ExtendedSolution, MMPDataPoint, DataPoint, ExtendedThresholdLinePoint } from "../types/interfaces.ts";
 import { Group } from "@visx/group";
 import { GridColumns, GridRows } from "@visx/grid";
 import { AxisBottom, AxisLeft } from "@visx/axis";
@@ -8,15 +8,18 @@ import { curveBasis } from "@visx/curve";
 import { useMemo } from "react";
 import {
   createPointData,
-  generateExtendedCurveDataFromOne
+  generateExtendedCurveDataFromOne,
+  combineExtendedAndStrydData
 } from "../libs/curveGeneration.ts";
 import { findBest, iterateExtendedParams} from "../libs/calculations_extended.ts";
+import {lossExtendedComponents} from "../libs/optimization.ts";
+import {Threshold} from "@visx/threshold";
 
 const background = '#f3f3f3';
 const defaultMargin = { top: 40, right: 30, bottom: 50, left: 50 };
 
 const minT: number = 1;
-const maxT: number = 4 * 60*60;
+const maxT: number = 4 * 60*60; //4 hours
 const tStep = 5;
 const logValues = [minT, 60, 3 * 60, 5 * 60, 10 * 60, 20 * 60, 60 * 60, maxT];
 
@@ -32,27 +35,34 @@ let currentParams: ExtendedSolution = {
 };
 
 const targetTimePoints = [10, 20, 30, 60, 90, 180, 300, 60*10, 60*12, 60*20, 60*30, 60*60, 60*90, 60*120, 60*180]
-// const userTimePoints = [10, 60, 180, 300, 60*10, 60*12, 60*20, 60*30, 60*60, 60*90, 60*120, 60*180]
-// const userTimePoints = [5, 120, 60*7, 60*60]
-
 
 const timeIntervals : Record <string, number> = {
-  maxI1: 2,
-  maxI2: 10,
+  maxI1: 1,
+  maxI2: 8,//10,
   sanI1: 20, //20
-  sanI2: 90,
-  anI1 : 125,//125
+  sanI2: 90, //90
+  anI1 : 60*2,//125
   anI2 : 60*5,//300
   aeI1 : 60*9,//480
   aeI2 : 60*30,//1800
-  laeI1: 60*50,//3600
-  laeI2: 60*180,//30000
+  laeI1: 60*45,//3600
+  laeI2: 6000,//60*60*1.5,//60*500,//30000
 }
 
 const pointX = (d: DataPoint) => d.x;
 const pointY = (d: DataPoint) => d.y;
 
-export default function AutoCPGC({ width, height, pdc, initialParams, forecastData, verbose, margin = defaultMargin }: AutoCPGCProps) {
+export default function AutoCPGC({
+  width,
+  height,
+  pdc,
+  initialParams,
+  forecastData,
+  thresholdGraph = false,
+  modelVersion = 5,
+  verbose,
+  margin = defaultMargin
+}: AutoCPGCProps) {
 
   console.log("AutoCP running...")
   width = Math.floor(width);
@@ -70,9 +80,10 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
   //copy of power_list for display and calculations
   const fieldPointData: DataPoint[] = useMemo(() => {
     return []
-  }, [])
+  }, [pdc])
 
   const powerArray = useMemo(() => {
+    //console.log("powerArray: ", pdc.curve.power_list[0])
 
     const powerArray = [...pdc.curve.power_list];
 
@@ -95,7 +106,7 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
           }
 
           for (let j = lastTimePoint; j <= item.time; j++) {
-            //console.log("pwerARRay", j, powerArray[j-1], fieldPointData[j])
+            //console.log("powerArray", j, powerArray[j-1], fieldPointData[j])
             powerArray[j-1] = item.power;
             fieldPointData[j-1] = {x: j, y: item.power, color: 'red'}
           }
@@ -104,19 +115,26 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
     }
 
     return powerArray
-  }, [forecastData, pdc, fieldPointData]);
-//console.log(fieldPointData)
+  }, [forecastData, pdc.curve.power_list, fieldPointData]);
+//console.log("fieldPointData: ", fieldPointData)
+//console.log("forecastData: ", forecastData)
 //console.log(powerArray);
 
   //get sample points for optimization
   const mmpData:MMPDataPoint[] = useMemo(() => {
     return []
-  }, []);
+  }, [pdc]);
 
   targetTimePoints.map((point, i) => {
     //console.log(point, pdc.breakdown.total[point-1])
     if (pdc.breakdown.total[point-1] != undefined) {
-      mmpData[i] = {time:point, power: pdc.breakdown.total[point-1]}
+      mmpData[i] = {
+        time:point,
+        power: pdc.breakdown.total[point-1],
+        c1: pdc.breakdown.alactic[point-1],
+        c2: pdc.breakdown.anaerobic[point-1],
+        c3: pdc.breakdown.aerobic[point-1],
+      }
     }
   })
 
@@ -181,24 +199,28 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
     const params : ExtendedSolution = {...currentParams};
 
     //use min values from GC
-    params.paa = 1000;
-    //params.paa = bestIntervals.bestMAX.power;
-    params.paadec = -2;
-    params.tau = 1.2;
-    params.cp = 300;
+    //params.paa = 300;
+    params.paa = bestIntervals.bestMAX.power;
+    params.paadec = -3;
+    params.tau = 1.0;
+    params.cp = 100;
+    //params.cp = bestIntervals.bestAE.power;
     params.cpdec = -0.6;
 
-    const maxLoops = 25;
-    const modelVersion = 5; //use 5!
+    const maxLoops = 10;
+    //const modelVersion = 5; //use 5!
+
+    const useBest = false;
 
     return iterateExtendedParams (
-      maxLoops,
-      powerArray,
-      timeIntervals,
-      functionalData,
-      {...params},
-      modelVersion,
-      verbose,
+        useBest,
+        maxLoops,
+        powerArray,
+        timeIntervals,
+        functionalData,
+        {...params},
+        modelVersion,
+        verbose,
     )
 
   }, [functionalData, powerArray, verbose])
@@ -210,17 +232,30 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
   const extendedCurveData = generateExtendedCurveDataFromOne(optimizedParams, maxT, tStep);
   //const extendedPointData = createPointData(userData);
 
+  const extendedThresholdCurveData = combineExtendedAndStrydData(extendedCurveData,pdc);
+  //console.log("extendedThresholdCurveData: ", extendedThresholdCurveData)
+  // for (let x = 0; x < 20; x++) {
+  //   console.log("extendedCurveData: ", extendedCurveData[x])
+  //   console.log("extendedThresholdCurveData: ", extendedThresholdCurveData[x])
+  //   console.log("pdc: ", pdc.breakdown.total[x])
+  // }
+
   //remove missing data
   const functionalDataFiltered = functionalData.filter(value => value.time !== 0)
   const functionalPointData = createPointData(functionalDataFiltered);
-
+  // console.log("functionalData: ", functionalData)
+  // console.log("functionalDataFiltered: ", functionalDataFiltered)
+  // console.log("functionalPointData: ", functionalPointData)
 
   //const areaKeys = ['c1', 'c2', 'c3'];
   //const areaData =  [...extendedCurveData]
 
   // scales
   const maxPoint = Math.max(...pdc.breakdown.total);
+  // console.log("maxPoint: ", maxPoint)
   const maxCurve = Math.max(...powerArray) ;
+  // const maxCurve = Math.max(...extendedThresholdCurveData.map((d) => d.total)) ;
+  // console.log("maxCurve: ", maxCurve)
 
   const yScale = scaleLinear<number>({
     domain: [
@@ -241,6 +276,21 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
     range : [0, width - 75],
     nice  : false,
   });
+
+  console.log("loss")
+  const loss = lossExtendedComponents(optimizedParams, mmpData)
+  console.log(JSON.stringify(loss))
+  // console.log(JSON.stringify(optimizedParams))
+  // console.log(JSON.stringify(mmpData))
+
+  let useOverlayStrokePath = true;
+  if (thresholdGraph) useOverlayStrokePath = false;
+  const predictedStrokeWidth = useOverlayStrokePath ? 1.0 : 2.0
+  const predictedStrokeOpacity = useOverlayStrokePath ? 1.0 : 0.8
+  const predictedStrokeDasharray = useOverlayStrokePath ? undefined : "1,5"
+  const pdcStrokeWidth = useOverlayStrokePath ? 7.0 : 1.0
+  const pdcStrokeOpacity = useOverlayStrokePath ? 0.2 : 0.5
+  const pdcStrokeDasharray = useOverlayStrokePath ? "1,5" : undefined
 
 // for finding unused memo
 // console.log("rendering return output AutoCPPlus", width)
@@ -272,7 +322,7 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
               />
             </Group>
             <Group left={0} top={14}>
-              <text x={0} y={0}>CP: {Math.round(optimizedParams.cp * 100) / 100} W</text>
+              <text x={0} y={0}>CP: {(Math.round(optimizedParams.cp * 100) / 100).toFixed(2)} W</text>
               <line x1={-13} x2={-2} y1={-4} y2={-4}
                     stroke={'purple'}
                     strokeWidth={2}
@@ -294,13 +344,13 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
             <Group left={0} top={3*14}>
               <text x={0} y={0}
               fill={(Math.round(optimizedParams.paadec*100)/100 <= -2.95) ? 'red' : 'default'}
-              >paadec: {Math.round(optimizedParams.paadec * 100)/100}</text>
+              >paadec: {(Math.round(optimizedParams.paadec * 100)/100).toFixed(2)}</text>
             </Group>
 
             <Group left={0} top={4*14}>
               <text x={0} y={0}
               fill={(Math.round(optimizedParams.tau*100)/100 <= 0.51) ? 'red' : 'default'}
-              >tau: {Math.round(optimizedParams.tau * 1000) / 1000}</text>
+              >tau: {(Math.round(optimizedParams.tau * 1000) / 1000).toFixed(3)}</text>
               <line x1={-13} x2={-2} y1={-4} y2={-4}
                     stroke={'#10b981'}
                     strokeWidth={2}
@@ -314,10 +364,17 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
             </Group>
 
             <Group left={0} top={6*14}>
-              <text x={0} y={0}>CPdec: {Math.round(optimizedParams.cpdec*100)/100}</text>
+              <text x={0} y={0}>CPdec: {(Math.round(optimizedParams.cpdec*100)/100).toFixed(2)}</text>
             </Group>
 
 
+          </Group>
+
+          <Group left={width - 190} top={200}>
+            <text x={0} y={0} style={{ fontWeight: 700 }}>RMSE</text>
+            <text x={0} y="20">C1: {Math.round(Math.sqrt(loss.c1) * 100000) / 100000}</text>
+            <text x={0} y="35">C2: {Math.round(Math.sqrt(loss.c2) * 100000) / 100000}</text>
+            <text x={0} y="50">C3: {Math.round(Math.sqrt(loss.c3) * 100000) / 100000}</text>
           </Group>
 
 
@@ -368,6 +425,85 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
           </text>
 
 
+          {/* Threshold Graph C1*/}
+          <Threshold<ExtendedThresholdLinePoint>
+              id={`${Math.random()}`}
+              data={extendedThresholdCurveData}
+              x={(d) => logScale(d.x) ?? 0}
+              y0={(d) => yScale(d.c1) ?? 0}
+              y1={(d) => yScale(d.c1Stryd) ?? 0}
+              clipAboveTo={-margin.top}
+              clipBelowTo={yMax}
+              curve={curveBasis}
+              belowAreaProps={{
+                fill: 'red',
+                fillOpacity: 0.4,
+              }}
+              aboveAreaProps={{
+                fill: 'green',
+                fillOpacity: 0.4,
+              }}
+          />
+
+          {/* Threshold Graph C2*/}
+          <Threshold<ExtendedThresholdLinePoint>
+              id={`${Math.random()}`}
+              data={extendedThresholdCurveData}
+              x={(d) => logScale(d.x) ?? 0}
+              y0={(d) => yScale(d.c2) ?? 0}
+              y1={(d) => yScale(d.c2Stryd) ?? 0}
+              clipAboveTo={-margin.top}
+              clipBelowTo={yMax}
+              curve={curveBasis}
+              belowAreaProps={{
+                fill: 'red',
+                fillOpacity: 0.4,
+              }}
+              aboveAreaProps={{
+                fill: 'green',
+                fillOpacity: 0.4,
+              }}
+          />
+
+          {/* Threshold Graph C3*/}
+          <Threshold<ExtendedThresholdLinePoint>
+              id={`${Math.random()}`}
+              data={extendedThresholdCurveData}
+              x={(d) => logScale(d.x) ?? 0}
+              y0={(d) => yScale(d.c3) ?? 0}
+              y1={(d) => yScale(d.c3Stryd) ?? 0}
+              clipAboveTo={-margin.top}
+              clipBelowTo={yMax}
+              curve={curveBasis}
+              belowAreaProps={{
+                fill: 'red',
+                fillOpacity: 0.4,
+              }}
+              aboveAreaProps={{
+                fill: 'green',
+                fillOpacity: 0.4,
+              }}
+          />
+
+          {/* Threshold Graph Total*/}
+          <Threshold<ExtendedThresholdLinePoint>
+              id={`${Math.random()}`}
+              data={extendedThresholdCurveData}
+              x={(d) => logScale(d.x) ?? 0}
+              y0={(d) => yScale(d.total) ?? 0}
+              y1={(d) => yScale(d.totalStryd) ?? 0}
+              clipAboveTo={-margin.top}
+              clipBelowTo={yMax}
+              curve={curveBasis}
+              belowAreaProps={{
+                fill: 'red',
+                fillOpacity: 0.4,
+              }}
+              aboveAreaProps={{
+                fill: 'green',
+                fillOpacity: 0.4,
+              }}
+          />
 
           {/*c1 line*/}
           <LinePath
@@ -376,9 +512,9 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
             x={(d:number, index:number) => logScale(index + 1) ?? d}
             y={(d) => yScale(d) ?? 0}
             stroke="teal"
-            strokeWidth={1}
-            strokeOpacity={0.5}
-            strokeDasharray="1,2"
+            strokeWidth={pdcStrokeWidth}
+            strokeOpacity={pdcStrokeOpacity}
+            strokeDasharray={pdcStrokeDasharray}
           />
           <LinePath
             data={extendedCurveData}
@@ -411,9 +547,9 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
             x={(d:number, index:number) => logScale(index + 1) ?? d}
             y={(d) => yScale(d) ?? 0}
             stroke="#10b981"
-            strokeWidth={1}
-            strokeOpacity={0.5}
-            strokeDasharray="1,2"
+            strokeWidth={pdcStrokeWidth}
+            strokeOpacity={pdcStrokeOpacity}
+            strokeDasharray={pdcStrokeDasharray}
           />
           <LinePath
             data={extendedCurveData}
@@ -445,9 +581,9 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
             x={(d:number, index:number) => logScale(index + 1) ?? d}
             y={(d) => yScale(d) ?? 0}
             stroke={"purple"}
-            strokeWidth={1}
-            strokeOpacity={0.7}
-            strokeDasharray="1,2"
+            strokeWidth={pdcStrokeWidth}
+            strokeOpacity={pdcStrokeOpacity}
+            strokeDasharray={pdcStrokeDasharray}
           />
           <LinePath
             data={extendedCurveData}
@@ -463,14 +599,14 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
 
           {/*total line*/}
           <LinePath
-            data={pdc.breakdown.total}
+            data={extendedThresholdCurveData}
             curve={curveBasis}
-            x={(d:number, index:number) => logScale(index + 1) ?? d}
-            y={(d) => yScale(d) ?? 0}
+            x={(d) => logScale(d.x) ?? 0}
+            y={(d) => yScale(d.totalStryd) ?? 0}
             stroke="indigo"
-            strokeWidth={1.0}
-            strokeOpacity={0.5}
-            strokeDasharray="1,5"
+            strokeWidth={pdcStrokeWidth}
+            strokeOpacity={pdcStrokeOpacity}
+            strokeDasharray={pdcStrokeDasharray}
           />
           <LinePath
             data={extendedCurveData}
@@ -478,10 +614,11 @@ export default function AutoCPGC({ width, height, pdc, initialParams, forecastDa
             x={(d) => logScale(d.x) ?? 0}
             y={(d) => yScale(d.total) ?? 0}
             stroke="indigo"
-            strokeWidth={2}
-            strokeOpacity={0.8}
-            //strokeDasharray="1,8"
+            strokeWidth={predictedStrokeWidth}
+            strokeOpacity={predictedStrokeOpacity}
+            strokeDasharray={predictedStrokeDasharray}
           />
+
 
 
 

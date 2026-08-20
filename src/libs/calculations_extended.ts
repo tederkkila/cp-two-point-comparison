@@ -165,6 +165,21 @@ export const solve_tau = (
   const x = t / 60;
   let tau = 0;
 
+  // console.log(power)
+  // console.log(params.paa * (1.20-0.20 * Math.exp(-1 * x)))
+  // console.log(Math.exp(params.paadec * x))
+  // console.log(params.paa, params.paadec)
+  // console.log((power - (params.paa * (1.20-0.20 * Math.exp(-1 * x)) * Math.exp(params.paadec * x))))
+  // console.log(power)
+  // console.log((params.paa * (1.20-0.20 * Math.exp(-1 * x)) * Math.exp(params.paadec * x)))
+  // console.log((1.20-0.20 * Math.exp(-1 * x)))
+  // console.log(Math.exp(params.paadec * x))
+  // console.log(params.cp)
+  // console.log((1 - Math.exp(params.taudel * x)))
+  // console.log((1 - Math.exp(params.cpdel * x)))
+  // console.log((1 + params.cpdec * Math.exp(params.cpdecdel / (x))))
+
+
   if (version == 5) {
     tau = (
       (
@@ -176,6 +191,8 @@ export const solve_tau = (
       ) - 1
       ) * x
     ;
+
+
   } else if (version == 6) {
     tau = (
       (power - params.paa * (1.10 - 0.10 * Math.exp(-8 * x)) * Math.exp(params.paadec * x))
@@ -200,16 +217,16 @@ export const solve_paadec = (
 
   if (version == 5) {
 
-    paadec = Math.log (
-      (power - (params.cp
-        * (1 - Math.exp(params.taudel * x))
-        * (1 - Math.exp(params.cpdel * x))
-        * (1 + params.cpdec * Math.exp(params.cpdecdel / (x)))
-        * (1 + params.tau / (x))
-      ))
-    / (params.paa * (1.20-0.20 * Math.exp(-1 * x)))
-    ) / x
-    ;
+    let preLog = (power - (params.cp
+            * (1 - Math.exp(params.taudel * x))
+            * (1 - Math.exp(params.cpdel * x))
+            * (1 + params.cpdec * Math.exp(params.cpdecdel / (x)))
+            * (1 + params.tau / (x))
+        ))
+        / (params.paa * (1.20-0.20 * Math.exp(-1 * x)))
+
+    preLog = Math.max(preLog, 0.00001);
+    paadec = Math.log ( preLog ) / x;
   } else if (version == 6) {
     paadec = 0
   }
@@ -225,7 +242,7 @@ export const solve_paa = (
 ) :number => {
 
   const x = t / 60;
-  let paa = 0;
+  let paa = 100;
 
   if (version == 5) {
     paa =
@@ -297,19 +314,21 @@ export const findBest = (
 }
 
 export const iterateExtendedParams = (
-  maxLoops: number,
-  powerArray: number[],
-  timeIntervals: Record<string, number>,
-  functionalData: MMPDataPoint[],
-  params: ExtendedSolution,
-  modelVersion: number = 5,
-  verbose: boolean = false,
+    useBest: boolean,
+    maxLoops: number,
+    powerArray: number[],
+    timeIntervals: Record<string, number>,
+    functionalData: MMPDataPoint[],
+    params: ExtendedSolution,
+    modelVersion: number = 5,
+    verbose: boolean = false,
 ): ExtendedSolutionIterated => {
 
-  const deltaMax_tau = 0.0001;
-  const deltaMax_paa = 0.01;
-  const deltaMax_paadec = 0.0001;
+  const deltaMax_tau = 0.000001;
+  const deltaMax_paa = 0.00001;
+  const deltaMax_paadec = 0.00001;
   console.log(timeIntervals)
+  console.log("initial Params", JSON.stringify(params))
 
   let iteration = 0;
   while (true) { // An infinite loop that will be broken
@@ -339,79 +358,131 @@ export const iterateExtendedParams = (
         params.cp = i_cp;
         functionalData[3] = { time: i, power: powerArray[i-1] };
       }
+
     }
 
-    if (verbose) console.log("functional data cp", functionalData[3].time, functionalData[3].power);
+    //if (verbose) console.log("functional data cp", functionalData[3].time, functionalData[3].power);
     if (verbose) console.log(iteration, "params.cp", params.cp, previousParams.cp, params.cp - previousParams.cp);
 
     // SOLVE FOR TAU [curvature constant]
-    params.tau = 0.5; // drop current estimate down to min
+    const min_tau = 0.5
+    params.tau = min_tau; // drop current estimate down to min
+    let avg_tau = 0;
+    let count_tau = 1;
+    let highest_tau = 0;
     for (let i: number = timeIntervals.anI1; i <= timeIntervals.anI2; i++) {
 
-      const i_tau = solve_tau(i, powerArray[i-1], { ...params }, modelVersion);
-      //console.log(i_tau);
+      //console.log("params", JSON.stringify(params))
 
+
+      const i_tau = solve_tau(i, powerArray[i-1], { ...params }, modelVersion);
+      avg_tau = ((count_tau - 1) * avg_tau + i_tau) / count_tau;
+      highest_tau = Math.max(highest_tau, i_tau);
+
+      console.log(` tau ${params.tau} ${i}: ${i_tau} avg ${avg_tau} high ${highest_tau}`)
       if (params.tau < i_tau ) {
+        //console.log(` tau ${params.tau} ${i}: ${i_tau} avg ${avg_tau} update`)
         params.tau = i_tau;
         //console.log(i_tau);
         functionalData[2] = { time: i, power: powerArray[i-1] };
-      } else if (i == timeIntervals.anI1) {
-        functionalData[2] = { time: timeIntervals.anI1, power: powerArray[timeIntervals.anI1-1] };
       }
+      // else if (i == timeIntervals.anI1) {
+      //   //console.log(` tau ${params.tau} ${i}: ${i_tau} avg ${avg_tau} timeinterval match`)
+      //   functionalData[2] = { time: timeIntervals.anI1, power: powerArray[timeIntervals.anI1-1] };
+      // } else {
+      //   //console.log(` tau ${params.tau} ${i}: ${i_tau} avg ${avg_tau} `)
+      //
+      // }
 
     }
+
+    if (params.tau <= 0.5) {
+      console.log(` tau ${params.tau} update with previous ${previousParams.tau}`)
+      params.tau = previousParams.tau;
+    }
+
     if (verbose) console.log(iteration, "params.tau", params.tau, previousParams.tau, params.tau - previousParams.tau)
     if (verbose) console.log("function data tau", functionalData[2].time, functionalData[2].power);
 
 
+
+
+    // SOLVE FOR PAA_DEC [decay rate for ATP-PCr energy system]
     const min_paadec = -3;
     const max_paadec = -0.25;
-    // SOLVE FOR PAA_DEC [decay rate for ATP-PCr energy system]
     let avg_paadec = 0;
     let count_paadec = 1;
-    params.paadec = min_paadec; //drop value for iteration to min
+    let highest_paadec = -3;
+    let updates_paadec = 0;
+    //params.paadec = min_paadec; //drop value for iteration to min
 
     for (let i: number = timeIntervals.sanI1; i <= timeIntervals.sanI2; i++) {
 
       const i_paadec = solve_paadec(i, powerArray[i-1], { ...params }, modelVersion);
       avg_paadec = ((count_paadec - 1) * avg_paadec + i_paadec) / count_paadec;
-      //console.log("i_paadec", i_paadec);
-      //console.log("avg_paadec", avg_paadec);
+      highest_paadec = Math.max(highest_paadec, i_paadec);
+      //console.log(` paadec ${params.paadec} ${i}: ${i_paadec} avg ${avg_paadec} high ${highest_paadec}`)
+
 
       if (params.paadec < i_paadec && i_paadec < max_paadec) {
-        //console.log("update paadec")
+        //console.log(` paadec ${params.paadec} ${i}: ${i_paadec} avg ${avg_paadec} update`)
         params.paadec = i_paadec;
+        updates_paadec++;
         functionalData[1] = {time: i, power: powerArray[i-1]};
+
+      } else {
+        //console.log(` paadec ${params.paadec} ${i}: ${i_paadec} avg ${avg_paadec}`)
       }
 
       count_paadec++;
+      //params.paadec = (params.paadec * (count_paadec - 1 ) + avg_paadec)/count_paadec;
+
+    }
+
+    //params.paadec = (avg_paadec + params.paadec)/2;
+
+    if (params.paadec == previousParams.paadec) {
+      console.log("params.paadec no solution found - using highest")
+      params.paadec = highest_paadec;
+      // params.paadec = avg_paadec;
     }
 
     if (verbose)console.log(iteration, "params.paadec", params.paadec, previousParams.paadec, params.paadec - previousParams.paadec);
 
+
     // SOLVE FOR PAA [max power]
     let avg_paa = 0;
     let count_paa = 1;
+    let updates_paa = 0;
     for (let i: number = timeIntervals.maxI1; i <= timeIntervals.maxI2; i++) {
 
       const i_paa = solve_paa(i, powerArray[i-1], { ...params }, modelVersion);
       avg_paa = ((count_paa - 1) * avg_paa + i_paa) / count_paa;
-      //console.log("i_paa", i_paa, "avg_paa", avg_paa);
+      //console.log(" ", i, "i_paa", i_paa, "avg_paa", avg_paa);
 
       if (params.paa < i_paa) {
+        updates_paa++;
         //console.log("update paa")
         params.paa = i_paa;
         functionalData[0] = {time: i, power: powerArray[i-1]};
       }
 
+
       count_paa++;
+      //params.paa = (params.paa * (count_paa - 1 ) + avg_paa)/count_paa;
+
+
     }
 
-    if (verbose)console.log(iteration, "params.paa", params.paa,  "avg_paa", avg_paa);
-    if (avg_paa < 0.99 * params.paa) {
+    if (verbose)console.log(iteration, "params.paa", params.paa,  "avg_paa", avg_paa, "updates_paa", updates_paa);
+    if (avg_paa < (0.98 * params.paa)) {
+      console.log("using avg_paa: ", avg_paa, (0.98 * params.paa), params.paa)
       params.paa = avg_paa;
+    } else if (updates_paa < 1) {
+      //updates_paa++;
+      //params.paa *= 0.99;
     }
-    //params.paa = avg_paa;
+
     // params.paa = (params.paa + avg_paa)/2;
 
     if (verbose)console.log(iteration, "params.paa", params.paa, previousParams.paa, params.paa - previousParams.paa);
@@ -422,49 +493,57 @@ export const iterateExtendedParams = (
     let count_cpdec = 1;
     params.cpdec = -5;
 
-    for (let i: number = timeIntervals.laeI1; i <= timeIntervals.laeI2; i = i + 120) {
+    if (timeIntervals.laeI1 < powerArray.length) {
 
-      if (powerArray[i-1]){
-        let i_cpdec = solve_cpdec(i, powerArray[i-1], { ...params }, modelVersion);
-        avg_cpdec = ((count_cpdec - 1) * avg_cpdec + i_cpdec) / count_cpdec;
-        //console.log("i", i, "i_cpdec", i_cpdec, "avg_cpdec", avg_cpdec);
+      for (let i: number = timeIntervals.laeI1; i <= timeIntervals.laeI2; i = i + 120) {
 
-        if (i_cpdec > 0) {
-          i_cpdec = 0;
-        }
-
-        if (params.cpdec < i_cpdec) {
-          params.cpdec = i_cpdec;
+        if (powerArray[i - 1]) {
+          let i_cpdec = solve_cpdec(i, powerArray[i - 1], {...params}, modelVersion);
+          avg_cpdec = ((count_cpdec - 1) * avg_cpdec + i_cpdec) / count_cpdec;
           //console.log("i", i, "i_cpdec", i_cpdec, "avg_cpdec", avg_cpdec);
-          functionalData[4] = {time: i, power: powerArray[i-1]};
+
+          if (i_cpdec > 0) {
+            i_cpdec = 0;
+          }
+
+          if (params.cpdec < i_cpdec) {
+            params.cpdec = i_cpdec;
+            //console.log("i", i, "i_cpdec", i_cpdec, "avg_cpdec", avg_cpdec);
+            functionalData[4] = {time: i, power: powerArray[i - 1]};
+          }
+          count_cpdec++;
         }
-        count_cpdec++;
+
       }
 
+    } else {
+      console.log("Power data does not exist above laeI1 3600s. Set cpdec to -0.1");
+        params.cpdec = -0.1;
     }
 
+    //console.log("functionalData", functionalData);
     if (verbose) console.log(iteration, "params.cpdec", params.cpdec, previousParams.cpdec, params.cpdec - previousParams.cpdec);
 
     let breakForDeltaMax = false
 
-    if (iteration > 1) {
+    if (iteration > 2) {
 
       if (
-        Math.abs(params.tau - previousParams.tau) < deltaMax_tau
+        Math.abs(params.tau - previousParams.tau) < deltaMax_tau && params.tau != min_tau
       ) {
         console.log("Breaking loop for minimum change tau.", params.tau);
         breakForDeltaMax = true;
       }
 
       if (
-        Math.abs(params.paadec - previousParams.paadec) < deltaMax_paadec
+        Math.abs(params.paadec - previousParams.paadec) < deltaMax_paadec && updates_paadec > 0
       ) {
         console.log("Breaking loop for minimum change paadec.", params.paadec);
-        //breakForDeltaMax = true;
+        breakForDeltaMax = true;
       }
 
       if (
-        Math.abs(params.paa - previousParams.paa) < deltaMax_paa
+        Math.abs(params.paa - previousParams.paa) < deltaMax_paa && updates_paa > 0
       ) {
         console.log("Breaking loop for minimum change paa.", params.paa);
         breakForDeltaMax = true;
@@ -475,6 +554,8 @@ export const iterateExtendedParams = (
     }
 
     if (breakForDeltaMax) {
+      //if (params.tau < min_tau) params.tau = min_tau;
+      //if (params.paadec < min_paadec) params.paadec = min_paadec;
       break;
     }
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import ParentSize from "@visx/responsive/lib/components/ParentSize";
+import { ParentSize } from "@visx/responsive";
 import ExtendedEstimation from "./components/ExtendedEstimation.tsx";
 import { ExtendedSolution, MMPDataPoint } from "./types/interfaces.ts"
 import PTSideBar from "./components/PTSidebar.tsx";

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import AutoCPComponents from "./components/AutoCPComponents.tsx";
-import ParentSize from "@visx/responsive/lib/components/ParentSize";
+import { ParentSize } from "@visx/responsive";
 import { ExtendedSolution } from "./types/interfaces.ts"
 
 const initialParamsDefault: ExtendedSolution = {
