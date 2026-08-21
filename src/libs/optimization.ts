@@ -29,12 +29,14 @@ export const lossExtended = (
     total: 0,
   }
 
+  let tempMSE = 0
+
   for (let i: number = 0; i < data.length; i++) {
     const predicted = extended_model(data[i].time, params);
-    mse += Math.pow(predicted - data[i].power, 2);
+    tempMSE += Math.pow(predicted - data[i].power, 2);
   }
 
-  mse.total = mse / data.length;
+  mse.total = tempMSE / data.length;
   return mse
 }
 
