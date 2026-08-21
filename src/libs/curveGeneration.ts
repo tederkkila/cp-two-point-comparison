@@ -210,7 +210,7 @@ export const combineExtendedAndStrydData = (
   // console.log('strydCurveData', strydCurveData.breakdown.total[7]);
   // console.log('strydCurveData', strydCurveData.breakdown.total);
 
-  const combined = []
+  const combined: ExtendedThresholdLinePoint[] = []
 
   extendedCurveData.forEach((extendedPoint, i) => {
     //console.log(i, 'extendedPoint', extendedPoint);

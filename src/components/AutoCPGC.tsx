@@ -210,10 +210,7 @@ export default function AutoCPGC({
     const maxLoops = 10;
     //const modelVersion = 5; //use 5!
 
-    const useBest = false;
-
     return iterateExtendedParams (
-        useBest,
         maxLoops,
         powerArray,
         timeIntervals,

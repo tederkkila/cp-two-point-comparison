@@ -314,7 +314,6 @@ export const findBest = (
 }
 
 export const iterateExtendedParams = (
-    useBest: boolean,
     maxLoops: number,
     powerArray: number[],
     timeIntervals: Record<string, number>,
@@ -414,7 +413,7 @@ export const iterateExtendedParams = (
     let count_paadec = 1;
     let highest_paadec = -3;
     let updates_paadec = 0;
-    //params.paadec = min_paadec; //drop value for iteration to min
+    params.paadec = min_paadec; //drop value for iteration to min
 
     for (let i: number = timeIntervals.sanI1; i <= timeIntervals.sanI2; i++) {
 

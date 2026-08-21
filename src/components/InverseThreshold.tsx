@@ -135,7 +135,6 @@ export default function InverseThreshold({ width, height, data, margin = default
   width = Math.floor(width);
 
   //const maxX: number = Math.max(data.testOneLongTime, data.testTwoLongTime) + 100;
-  const maxX: number = 3600;
 
   const t1x0: number = 1 / data.testOneShortTime;
   const t1x1: number = 1 / data.testOneLongTime;

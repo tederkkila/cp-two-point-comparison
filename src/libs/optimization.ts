@@ -24,16 +24,18 @@ export const lossPT = (
 export const lossExtended = (
   params: ExtendedSolution,
   data: MMPDataPoint[],
-): number => {
-  let mse: number = 0;
+): Record<string, number> => {
+  let mse: Record<string, number> = {
+    total: 0,
+  }
 
   for (let i: number = 0; i < data.length; i++) {
     const predicted = extended_model(data[i].time, params);
     mse += Math.pow(predicted - data[i].power, 2);
   }
-  //console.log(mse);
-  return mse / data.length;
-  //return mse;
+
+  mse.total = mse / data.length;
+  return mse
 }
 
 export const lossExtendedComponents = (
@@ -201,7 +203,7 @@ export const numericalGradientPT = (
     const lossMinusDelta: number = loss(params, data);
     grad[j] = (lossPlusDelta - lossMinusDelta) / (2 * delta);
     params[j] = initialValue;
-    //console.log(j, delta, lossPlusDelta, lossMinusDelta, grad[j] );
+    //console.log(j, delta, lossPlusDelta, lossMinusDelta, grad[j]);
   }
 
   return grad;
@@ -284,7 +286,7 @@ export const gradientDescentExtended = (
     params      : { ...params },
     iterations  : finalIterationCount,
     mse0        : Math.round(mse0 * 10000) / 10000,
-    mseStop     : Math.round(mse * 10000000) / 10000000,
+    mseStop     : Math.round(mse.total * 10000000) / 10000000,
     mseEffective: Math.round(mseRound * 10000000) / 10000000,
     msePrev     : Math.round(mseLast * 10000000) / 10000000,
   };
@@ -321,7 +323,7 @@ export const numericalGradientExtended = (
 
     grad[j] = (lossPlusDelta.total - lossMinusDelta.total) / (2 * delta);
     params[j] = initialValue;
-    //console.log(j, delta, lossPlusDelta, lossMinusDelta, grad[j] );
+    //console.log(j, delta, lossPlusDelta, lossMinusDelta, grad[j]);
   }
 
   return grad;
