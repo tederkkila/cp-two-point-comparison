@@ -126,8 +126,8 @@ export default function FITGenerator() {
   });
 
   let timestamp = startTime;
-  const durationShort = 60*3;
-  const powerShort = 400;
+  const durationShort = 60*9;
+  const powerShort = 300;
   const durationLong = 0;//60*12;
   const powerLong = 10;
   const durationEasy = 0;//60;

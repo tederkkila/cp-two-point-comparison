@@ -41,7 +41,7 @@ let currentParams: ExtendedSolution = {
   cpdecdel: 0,
 };
 
-const targetTimePoints = [1, 2, 3, 4, 5, 10, 20, 30, 60, 90, 180, 300, 60*10, 60*12, 60*20, 60*30, 60*60, 60*90, 60*120, 60*180]
+const targetTimePoints = [1, 2, 3, 4, 5, 10, 20, 30, 60, 90, 180, 300, 60*10, 60*12, 60*20, 60*30, 60*40, 60*50, 60*60, 60*90, 60*120, 60*180]
 
 const pointX = (d: DataPoint) => d.x;
 const pointY = (d: DataPoint) => d.y;
@@ -49,7 +49,7 @@ const pointC = (d: DataPoint) => d.color;
 
 export default function AutoCPComponents({ width, height, pdc, initialParams, verbose = false, margin = defaultMargin }: AutoCPComponentProps) {
 
-  console.log("AutoCPComponents running...", width)
+  //console.log("AutoCPComponents running...", width)
   width = Math.floor(width);
   // graph bounds
   const xMax = width - margin.left - margin.right;
@@ -128,6 +128,7 @@ export default function AutoCPComponents({ width, height, pdc, initialParams, ve
     //check max power c1 pcr curve
     const bestC1 = findBest(1, 20, currentPDC.breakdown.alactic)
     if (verbose) console.log("bestC1", bestC1);
+    params.paa = bestC1.power
     //check max power c2 anaerobic curve
     const bestC2 = findBest(20, 40, currentPDC.breakdown.anaerobic)
     if (verbose) console.log("bestC2", bestC2);
@@ -156,8 +157,10 @@ export default function AutoCPComponents({ width, height, pdc, initialParams, ve
 
 
     const x = bestC1.t / 60;
-    params.paa = (bestC1.power - params.cp * (1-Math.exp(params.taudel*(x))) * (1-Math.exp(params.cpdel*(x))) * (1+params.cpdec*Math.exp(params.cpdecdel/(x))) * ( 1 + params.tau/(x))) / Math.exp(params.paadec*(x)) / (1.20-0.20*Math.exp(-1*(x)));
-    if (verbose) console.log("paa from GC", params.paa);
+    if (verbose) console.log("x", x)
+    const paaGC = (bestC1.power - params.cp * (1-Math.exp(params.taudel*(x))) * (1-Math.exp(params.cpdel*(x))) * (1+params.cpdec*Math.exp(params.cpdecdel/(x))) * ( 1 + params.tau/(x))) / Math.exp(params.paadec*(x)) / (1.20-0.20*Math.exp(-1*(x)));
+    if (verbose) console.log("paa from GC", paaGC);
+    params.paa = Math.max(params.paa, paaGC)
 
 
     return params
@@ -171,9 +174,9 @@ export default function AutoCPComponents({ width, height, pdc, initialParams, ve
   const optimizationSolution = useMemo(() => {
 
     //console.log("Running optimizationSolution", mmpData)
-    const iterations: number = 10000;
-    const learningDecay: number = 0.99995;
-    const minMSEDelta: number = 0.000001;
+    const iterations: number = 5000;
+    const learningDecay: number = 0.995;
+    const minMSEDelta: number = 0.0000001;
     const parameterBounds = {
       cp : [100, 700],
       cpdec : [-5, 0],
@@ -185,14 +188,14 @@ export default function AutoCPComponents({ width, height, pdc, initialParams, ve
       taudel: [-10, -0.5],
     };
     const learningRate: ExtendedSolution = {
-      cp      : 0,
-      cpdec   : 0.0001,
-      cpdecdel: 0,
-      cpdel   : 0,
-      paa     : 0.005,
+      cp      : 0.005,
+      cpdec   : 0.001,
+      cpdecdel: 0, //no change allowed
+      cpdel   : 0, //no change allowed
+      paa     : 0.05,
       paadec  : 0.0001,
       tau     : 0.0001,
-      taudel  : 0,
+      taudel  : 0, //no change allowed
     };
 
     if (verbose) console.log("currentParams", currentParams);
@@ -229,6 +232,9 @@ export default function AutoCPComponents({ width, height, pdc, initialParams, ve
   const extendedCurveData = generateExtendedCurveDataFromOne(optimizedParams, maxT, tStep);
   const extendedPointData = createPointData(mmpData);
 
+  console.log("loss")
+  const loss = lossExtendedComponents(optimizedParams, mmpData)
+  console.log(JSON.stringify(loss))
 
   // scales
   const maxPoint = Math.max(...pdc.breakdown.total);
@@ -308,13 +314,13 @@ export default function AutoCPComponents({ width, height, pdc, initialParams, ve
             <Group left={0} top={3*14}>
               <text x={0} y={0}
                     fill={(Math.round(optimizedParams.paadec*100)/100 <= -2.95) ? 'red' : 'default'}
-              >paadec: {Math.round(optimizedParams.paadec * 100)/100}</text>
+              >paadec: {(Math.round(optimizedParams.paadec * 100)/100).toFixed(2)}</text>
             </Group>
 
             <Group left={0} top={4*14}>
               <text x={0} y={0}
                     fill={(Math.round(optimizedParams.tau*100)/100 <= 0.51) ? 'red' : 'default'}
-              >tau: {Math.round(optimizedParams.tau * 1000) / 1000}</text>
+              >tau: {(Math.round(optimizedParams.tau * 1000) / 1000).toFixed(3)}</text>
               <line x1={-13} x2={-2} y1={-4} y2={-4}
                     stroke={'#10b981'}
                     strokeWidth={2}
@@ -328,21 +334,31 @@ export default function AutoCPComponents({ width, height, pdc, initialParams, ve
             </Group>
 
             <Group left={0} top={6*14}>
-              <text x={0} y={0}>CPdec: {Math.round(optimizedParams.cpdec*100)/100}</text>
+              <text x={0} y={0}>CPdec: {(Math.round(optimizedParams.cpdec*100)/100).toFixed(2)}</text>
             </Group>
 
 
           </Group>
+
           {/*cp results*/}
-          <text x={width - 190} y="140" style={{ fontWeight: 700 }}>2-point CP</text>
-          <line x1={width - 190 -13} x2={width - 190 - 2} y1={134} y2={134}
-                stroke="#222"
-                strokeWidth={1.5}
-                strokeOpacity={0.8}
-                strokeDasharray="1,2"
-          />
-          <text x={width - 190} y="160">CP: {Math.round(cpSolution.CP * 10) / 10} W</text>
-          <text x={width - 190} y="175">W': {Math.round(cpSolution.W)} j</text>
+          <Group left={width - 190} top={140}>
+            <text x={0} y={0} style={{ fontWeight: 700 }}>2-point CP</text>
+            <line x1={0} x2={- 2} y1={6} y2={6}
+                  stroke="#222"
+                  strokeWidth={1.5}
+                  strokeOpacity={0.8}
+                  strokeDasharray="1,2"
+            />
+            <text x={0} y="20">CP: {Math.round(cpSolution.CP * 10) / 10} W</text>
+            <text x={0} y="35">W': {Math.round(cpSolution.W)} j</text>
+          </Group>
+
+          <Group left={width - 190} top={200}>
+            <text x={0} y={0} style={{ fontWeight: 700 }}>RMSE</text>
+            <text x={0} y="20">C1: {Math.round(Math.sqrt(loss.c1) * 100000) / 100000}</text>
+            <text x={0} y="35">C2: {Math.round(Math.sqrt(loss.c2) * 100000) / 100000}</text>
+            <text x={0} y="50">C3: {Math.round(Math.sqrt(loss.c3) * 100000) / 100000}</text>
+          </Group>
 
           {/*CP valid area*/}
           <rect x={logScale(cpValidTimeMin)} y={0} width={logScale(cpValidTimeMax)-logScale(cpValidTimeMin)} height={yMax} fill={'yellow'} fillOpacity={0.05}/>

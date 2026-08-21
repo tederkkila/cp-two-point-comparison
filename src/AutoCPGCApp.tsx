@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import AutoCPGC from "./components/AutoCPGC.tsx";
-import ParentSize from "@visx/responsive/lib/components/ParentSize";
+import { ParentSize } from "@visx/responsive";
 import { ExtendedSolution } from "./types/interfaces.ts"
 
 const initialParamsDefault: ExtendedSolution = {
@@ -60,6 +60,8 @@ function AutoCPApp() {
                 pdc={jsonData}
                 initialParams={initialParams}
                 forecastData={[]}
+                modelVersion={5}
+                thresholdGraph={true}
                 verbose={true}
               />
             }</ParentSize>

@@ -43,16 +43,23 @@ const pointC = (d: DataPoint) => d.color;
 
 const defaultMargin = { top: 40, right: 30, bottom: 50, left: 50 };
 
-const createLinearDataLine = (
+const createInverseDataLine = (
   t1slope: number,
   t1intercept: number,
   t2slope: number,
   t2intercept: number,
+  minX: number,
   maxX: number,
 ) => {
-  return new Array(maxX).fill(null).map((_, i) =>
-    generateDataRow(i, t1slope, t1intercept, t2slope, t2intercept)
-  );
+  console.log(`minX: ${minX}, maxX: ${maxX}`);
+  return new Array(maxX)
+      .fill(null)
+      .map((_, i) => i + 1)
+      .filter((x) => (minX <= x && x <= maxX))
+      .map((x) => {
+        //console.log(`x: ${x}`);
+        return generateDataRow(1 / x, t1slope, t1intercept, t2slope, t2intercept)
+      });
 }
 
 const generateDataRow = (
@@ -109,7 +116,7 @@ export type ThresholdProps = {
   margin?: { top: number; right: number; bottom: number; left: number };
 };
 
-export default function LinearThreshold({ width, height, data, margin = defaultMargin }: ThresholdProps) {
+export default function InverseThreshold({ width, height, data, margin = defaultMargin }: ThresholdProps) {
 
   // const data:LinearGraphData = {
   //   testOneShortTime: 180,
@@ -127,30 +134,37 @@ export default function LinearThreshold({ width, height, data, margin = defaultM
 
   width = Math.floor(width);
 
-  const maxX: number = Math.max(data.testOneLongTime, data.testTwoLongTime) + 100;
+  //const maxX: number = Math.max(data.testOneLongTime, data.testTwoLongTime) + 100;
 
-  const t1x0: number = data.testOneShortTime;
-  const t1x1: number = data.testOneLongTime;
-  const t1y0: number = t1x0 * data.testOneShortWatt;
-  const t1y1: number = t1x1 * data.testOneLongWatt;
+  const t1x0: number = 1 / data.testOneShortTime;
+  const t1x1: number = 1 / data.testOneLongTime;
+  const t1y0: number = data.testOneShortWatt;
+  const t1y1: number = data.testOneLongWatt;
 
-  const t2x0: number = data.testTwoShortTime;
-  const t2x1: number = data.testTwoLongTime;
-  const t2y0: number = t2x0 * data.testTwoShortWatt;
-  const t2y1: number = t2x1 * data.testTwoLongWatt;
+  const t2x0: number = 1 / data.testTwoShortTime;
+  const t2x1: number = 1 / data.testTwoLongTime;
+  const t2y0: number = data.testTwoShortWatt;
+  const t2y1: number = data.testTwoLongWatt;
 
-  // console.log(t1x0, t1x1, t1y0, t1y1, t2x0, t2x1, t2y0, t2y1);
+  console.log(t1x0, t1x1, t1y0, t1y1, t2x0, t2x1, t2y0, t2y1);
 
   const t1slope = calculateSlope(t1x0, t1x1, t1y0, t1y1);
   const t2slope = calculateSlope(t2x0, t2x1, t2y0, t2y1);
   const t1intercept = calculateIntercept(t1slope, t1x0, t1y0);
   const t2intercept = calculateIntercept(t2slope, t2x0, t2y0);
-  // console.log(`Test One: y = ${t1slope} x + ${t1intercept}`);
-  // console.log(`Test Two: y = ${t2slope} x + ${t2intercept}`);
+  console.log(`Test One: y = ${t1slope} x + ${t1intercept}`);
+  console.log(`Test Two: y = ${t2slope} x + ${t2intercept}`);
 
-  const graphData = createLinearDataLine(
-    t1slope, t1intercept, t2slope, t2intercept, maxX
+  let graphData = createInverseDataLine(
+      t1slope, t1intercept, t2slope, t2intercept,
+      Math.max(data.testOneShortTime, data.testTwoShortTime)-5,
+      Math.max(data.testOneLongTime, data.testTwoLongTime)+5,
   );
+
+  graphData = [
+      ...graphData,
+    generateDataRow(1 / 1000000, t1slope, t1intercept, t2slope, t2intercept)
+  ]
 
   let test2SlopeColor = '#222'
   if (Math.round(t1slope*10)/10 < Math.round(t2slope*10)/10) {
@@ -159,20 +173,31 @@ export default function LinearThreshold({ width, height, data, margin = defaultM
     test2SlopeColor = 'red';
   }
 
+  if (Math.round(t1intercept*10)/10 < Math.round(t2intercept*10)/10) {
+    test2SlopeColor = 'green';
+  } else if (Math.round(t1intercept*10)/10 > Math.round(t2intercept*10)/10) {
+    test2SlopeColor = 'red';
+  }
+
   const pointData = createPointData(
     t1x0, t1x1, t1y0, t1y1, t2x0, t2x1, t2y0, t2y1, test2SlopeColor
   );
 
-  // console.log(graphData);
+  console.log(graphData);
 
   // scales
   const xScale = scaleLinear<number>({
-    domain: [0, maxX],
+    //domain: [0, 0.1],
+    domain: [
+        0,
+        1/(Math.max(data.testOneShortTime, data.testTwoShortTime) - 10),
+    ],
   });
   const yScale = scaleLinear<number>({
     domain: [
-      Math.min(...graphData.map((d) => Math.min(t1(d), t2(d)))),
-      Math.max(...graphData.map((d) => Math.max(t1(d), t2(d)))),
+      //Math.min(...graphData.map((d) => Math.min(t1(d), t2(d)))),
+      Math.min(t1intercept, t2intercept),
+      Math.max(data.testOneLongWatt, data.testTwoLongWatt) + 100
     ],
     nice  : true,
   });
@@ -187,8 +212,8 @@ export default function LinearThreshold({ width, height, data, margin = defaultM
   xScale.range([0, width - 100]);
   yScale.range([yMax, 0]);
 
-  const colorUnderShade: string = (t1slope < t2slope) ? 'green' : 'white';
-  const colorOverShade: string = (t1slope >= t2slope) ? 'red' : 'white';
+  const colorUnderShade: string = (t1intercept < t2intercept) ? 'white' : 'red';
+  const colorOverShade: string = (t1intercept >= t2intercept) ? 'white' : 'green';
 
   let test2InterceptColor: string = "#222";
   if (Math.round(t1intercept) < Math.round(t2intercept)) {
@@ -197,7 +222,7 @@ export default function LinearThreshold({ width, height, data, margin = defaultM
     test2InterceptColor = 'red';
   }
   // Function to transform tick values (e.g., add a prefix)
-  const transformTickValues = (value: number) => value / 1000;
+  const transformTickValues = (value: number) => value;
 
   return (
     <div>
@@ -214,9 +239,9 @@ export default function LinearThreshold({ width, height, data, margin = defaultM
             tickFormat={transformTickValues}
           />
 
-          <text x={20} y={-10} fontSize={16} fillOpacity={0.4}>[ linearized two-parameter critical power model ]</text>
-          <text x="-90" y="15" transform="rotate(-90)" fontSize={10}>Energy (kilojoules)</text>
-          <text x={width-200} y={height-100} fontSize={10}>Time (seconds)</text>
+          <text x={20} y={-10} fontSize={16} fillOpacity={0.4}>[ linearized 1/time two-parameter critical power model ]</text>
+          <text x="-90" y="15" transform="rotate(-90)" fontSize={10}>power (W)</text>
+          <text x={width-200} y={height-100} fontSize={10}>time (1 / seconds)</text>
 
           <text x="40" y="20" style={{ fontWeight: 700 }}>Previous Test</text>
           <line x1={25} x2={35} y1={14} y2={14}
@@ -225,15 +250,15 @@ export default function LinearThreshold({ width, height, data, margin = defaultM
                 strokeOpacity={0.8}
                 strokeDasharray="1,2"
           />
-          <text x="40" y="35">CP: {Math.round(t1slope * 10) / 10} W</text>
-          <text x="40" y="50">W': {Math.round(t1intercept)} j</text>
+          <text x="40" y="35">W': {Math.round(t1slope)} j</text>
+          <text x="40" y="50">CP: {Math.round(t1intercept * 10) / 10} W</text>
           <text x="168" y="20" style={{ fontWeight: 700 }}>Current Test</text>
           <line x1={155} x2={166} y1={14} y2={14}
                 stroke={test2SlopeColor}
                 strokeWidth={1.5}
           />
-          <text x="168" y="35" style={{ fill: test2SlopeColor }}>CP: {Math.round(t2slope * 10) / 10} W</text>
-          <text x="168" y="50" style={{ fill: test2InterceptColor }}>W': {Math.round(t2intercept)} j</text>
+          <text x="168" y="35" style={{ fill: test2SlopeColor }}>W': {Math.round(t2slope)} j</text>
+          <text x="168" y="50" style={{ fill: test2InterceptColor }}>CP: {Math.round(t2intercept * 10) / 10} W</text>
           <Threshold<LineDataPoint>
             id={`${Math.random()}`}
             data={graphData}

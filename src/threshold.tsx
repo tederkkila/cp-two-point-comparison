@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import ParentSize from '@visx/responsive/lib/components/ParentSize';
+import { ParentSize } from "@visx/responsive";
 import './sandbox-styles.css';
 import ThresholdExample from './components/ThresholdExample'
 

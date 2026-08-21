@@ -1,11 +1,12 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import App from './App.tsx'
-import PTApp from './PTApp.tsx'
+import App from './App'
+import InverseOfTime from './InverseOfTime.tsx'
+import PTApp from './PTApp'
 import AutoCPApp from './AutoCPApp.tsx'
 import AutoCPPlusApp from './AutoCPPlusApp.tsx'
-import AutoCPGCApp from './AutoCPGCApp.tsx'
+import AutoCPGCApp from './AutoCPGCApp'
 import ExtendedApp from './ExtendedApp.tsx'
 import FITApp from './FITApp.tsx'
 import {
@@ -21,6 +22,18 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
+  },
+  {
+    path: "/inverse/:testTwoShortTime/:testTwoShortWatt/:testTwoLongTime/:testTwoLongWatt",
+    element: <InverseOfTime />,
+  },
+  {
+    path: "/inverse/:testTwoShortTime/:testTwoShortWatt/:testTwoLongTime/:testTwoLongWatt/:testOneShortTime/:testOneShortWatt/:testOneLongTime/:testOneLongWatt",
+    element: <InverseOfTime />,
+  },
+  {
+    path: "/inverse",
+    element: <InverseOfTime />,
   },
   {
     path: "/strydinstructions",
@@ -80,7 +93,7 @@ const router = createBrowserRouter([
   },
 });
 
-console.log("creating Root")
+//console.log("creating Root")
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

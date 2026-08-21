@@ -24,40 +24,59 @@ export const lossPT = (
 export const lossExtended = (
   params: ExtendedSolution,
   data: MMPDataPoint[],
-): number => {
-  let mse: number = 0;
+): Record<string, number> => {
+  let mse: Record<string, number> = {
+    total: 0,
+  }
+
+  let tempMSE = 0
 
   for (let i: number = 0; i < data.length; i++) {
     const predicted = extended_model(data[i].time, params);
-    mse += Math.pow(predicted - data[i].power, 2);
+    tempMSE += Math.pow(predicted - data[i].power, 2);
   }
-  //console.log(mse);
-  return mse / data.length;
-  //return mse;
+
+  mse.total = tempMSE / data.length;
+  return mse
 }
 
 export const lossExtendedComponents = (
   params: ExtendedSolution,
   data: MMPDataPoint[],
-): number => {
-  let mse: number = 0;
+): Record<string, number> => {
+  let mse: Record<string, number> = {
+    total: 0,
+    c1: 0,
+    c2: 0,
+    c3: 0,
+  };
 
   for (let i: number = 0; i < data.length; i++) {
     const predictedC1 = plotC1(data[i].time, params.paa, params.paadec);
     const c1 = data[i].c1 ?? 0;
-    mse += Math.pow(predictedC1 - c1, 2);
+    // console.log(i, data[i].time, predictedC1, c1)
+    mse.c1 += Math.pow(predictedC1 - c1, 2);
 
     const predictedC2 = plotC2(data[i].time, params.cp, params.tau, params.taudel, params.cpdel, params.cpdec, params.cpdecdel);
     const c2 = data[i].c2 ?? 0;
-    mse += Math.pow(predictedC2 - c2, 2);
+    // console.log(i, data[i].time, predictedC2, c2)
+    mse.c2 += Math.pow(predictedC2 - c2, 2);
 
     const predictedC3 = plotC3(data[i].time, params.cp, params.taudel, params.cpdel, params.cpdec, params.cpdecdel);
     const c3 = data[i].c3 ?? 0;
-    mse += Math.pow(predictedC3 - c3, 2);
+    // console.log(i, data[i].time, predictedC3, c3)
+    mse.c3 += Math.pow(predictedC3 - c3, 2);
   }
-  //console.log(mse);
-  return mse / data.length;
-  //return mse;
+
+  // console.log(params)
+  // console.log(data)
+  // console.log(mse.c1)
+
+  mse.c1 = mse.c1 / data.length;
+  mse.c2 = mse.c2 / data.length;
+  mse.c3 = mse.c3 / data.length;
+  mse.total = (mse.c1 + mse.c2 + mse.c3);
+  return mse;
 }
 
 // Example using a simple gradient descent
@@ -73,7 +92,7 @@ export const gradientDescentPT = (
   iterations: number,
   parameterBounds:Record<string, Array<number>>,
   minMSEDelta:number,
-  )=> {
+)=> {
 
   //console.log("optimization", {...initialParams})
 
@@ -186,7 +205,7 @@ export const numericalGradientPT = (
     const lossMinusDelta: number = loss(params, data);
     grad[j] = (lossPlusDelta - lossMinusDelta) / (2 * delta);
     params[j] = initialValue;
-    //console.log(j, delta, lossPlusDelta, lossMinusDelta, grad[j] );
+    //console.log(j, delta, lossPlusDelta, lossMinusDelta, grad[j]);
   }
 
   return grad;
@@ -196,7 +215,7 @@ export const gradientDescentExtended = (
   loss: (
     initialParams : ExtendedSolution,
     data: MMPDataPoint[],
-  ) => number,
+  ) => Record<string, number>,
   initialParams : ExtendedSolution,
   data: MMPDataPoint[],
   learningRate: ExtendedSolution,
@@ -210,7 +229,7 @@ export const gradientDescentExtended = (
 
 
   const params: ExtendedSolution = {...initialParams};
-  const mse0 = loss(initialParams, data);
+  const mse0 = loss(initialParams, data).total;
   let mseLast: number = mse0;
   let finalIterationCount: number = 0;
   for (let i = 0; i < iterations; i++) {
@@ -219,7 +238,7 @@ export const gradientDescentExtended = (
     //console.log("iteration", i);
     const grad = numericalGradientExtended(loss, params, data);
     //console.log(grad);
-    //console.log(JSON.stringify(grad))
+    //console.log("grad", JSON.stringify(grad))
 
 
     let delta: number;
@@ -227,18 +246,20 @@ export const gradientDescentExtended = (
     for (j in params) {
       learningRate[j] *= learningDecay;
       delta = learningRate[j] * grad[j];
+      //console.log(j, JSON.stringify(delta))
       params[j] -= delta;
       params[j] = Math.max(parameterBounds[j][0], Math.min(parameterBounds[j][1], params[j]));
 
     }
     //console.log(JSON.stringify(params))
 
-    const mseCurrent = loss(params, data);
+    const mseCurrent = loss(params, data).total;
+    // console.log(`mseCurrent: ${mseCurrent} mseLast: ${mseLast} | ${Math.abs(mseCurrent - mseLast)}`)
     finalIterationCount = i + 1;
 
     if (Math.abs(mseCurrent - mseLast) < minMSEDelta) {
       console.log(`stopping iterations at ${i} for min delta ${minMSEDelta}`)
-
+      console.log(`mseCurrent: ${mseCurrent} mseLast: ${mseLast} | ${Math.abs(mseCurrent - mseLast)}`)
       i = iterations
 
     } else if(mseCurrent < 0.00005){
@@ -261,20 +282,23 @@ export const gradientDescentExtended = (
     }
   }
 
-  const mseRound = loss(params, data);
+  const mseRound = loss(params, data).total;
 
   return {
     params      : { ...params },
     iterations  : finalIterationCount,
     mse0        : Math.round(mse0 * 10000) / 10000,
-    mseStop     : Math.round(mse * 10000000) / 10000000,
+    mseStop     : Math.round(mse.total * 10000000) / 10000000,
     mseEffective: Math.round(mseRound * 10000000) / 10000000,
     msePrev     : Math.round(mseLast * 10000000) / 10000000,
   };
 }
 
 export const numericalGradientExtended = (
-  loss: (params:ExtendedSolution, data:MMPDataPoint[]) => number,
+  loss: (
+      params:ExtendedSolution,
+      data:MMPDataPoint[]
+  ) => Record<string, number>,
   params: ExtendedSolution,
   data: MMPDataPoint[],
 )=> {
@@ -295,13 +319,13 @@ export const numericalGradientExtended = (
 
     const initialValue = params[j];
     params[j] = initialValue + delta;
-    const lossPlusDelta: number = loss(params, data);
+    const lossPlusDelta: Record<string, number> = loss(params, data);
     params[j] = initialValue - delta;
-    const lossMinusDelta: number = loss(params, data);
+    const lossMinusDelta: Record<string, number> = loss(params, data);
 
-    grad[j] = (lossPlusDelta - lossMinusDelta) / (2 * delta);
+    grad[j] = (lossPlusDelta.total - lossMinusDelta.total) / (2 * delta);
     params[j] = initialValue;
-    //console.log(j, delta, lossPlusDelta, lossMinusDelta, grad[j] );
+    //console.log(j, delta, lossPlusDelta, lossMinusDelta, grad[j]);
   }
 
   return grad;

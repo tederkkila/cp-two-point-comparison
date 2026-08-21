@@ -1,21 +1,20 @@
 import { useState } from 'react';
 import JsonFileLoader from './components/JsonFileLoader.tsx'
-import ParentSize from "@visx/responsive/lib/components/ParentSize";
+import { ParentSize } from "@visx/responsive";
 import AutoCPComponents from "./components/AutoCPComponents.tsx";
 import { ExtendedSolution, MMPDataPoint, StrydPDC } from "./types/interfaces.ts";
 import AutoCPGC from "./components/AutoCPGC.tsx";
 import StrydAutoCPSideBar from "./components/StrydAutoCPSidebar.tsx";
 import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/react";
 
 const initialParamsDefault: ExtendedSolution = {
-  cp      : 300,
+  cp      : 100,
   cpdec   : -0.1,
   cpdecdel: -180,
   cpdel   : -0.9,
   paa     : 300,
-  paadec  : -5,
-  tau     : 0.4,
+  paadec  : -3, //-5
+  tau     : 1,
   taudel  : -4.8,
 };
 
@@ -23,21 +22,61 @@ const initialMMPData: MMPDataPoint[] = [
   { time: 10, power: 0,},
   { time: 20, power: 0,},
   { time: 60*3, power: 0,},
-  { time: 60*12, power: 0,},
-  { time: 60*60, power: 0},
+  { time: 60*9, power: 0,},
+  { time: 60*20, power: 0},
 ];
 
 const initialParams = initialParamsDefault;
 
 const updateMMPDataFromFile  = (
-  pdc: StrydPDC,
-  currentMMPData: MMPDataPoint[],
+    pdc: StrydPDC,
+    currentMMPData: MMPDataPoint[],
 ) : MMPDataPoint[] => {
 
-  return currentMMPData.map (mmpData => ({
-    ...mmpData,
-      power: Math.round(pdc.curve.power_list[mmpData.time -1]),
-  }));
+  // console.log("updateMMPDataFromFile", pdc, currentMMPData);
+
+  const findPreviousAvailableMMPPoint = (
+      requestedTime: number,
+      previousTime: number,
+  ): MMPDataPoint | null => {
+    for (let time = requestedTime; time > previousTime; time--) {
+      const power = pdc.curve.power_list[time - 1];
+
+      if (Number.isFinite(power)) {
+        return {
+          time,
+          power: Math.round(power),
+        };
+      }
+    }
+
+    return null;
+  };
+
+  return currentMMPData.map((mmpData, index) => {
+    const previousTime = currentMMPData[index - 1]?.time ?? 0;
+    const pdcPower = pdc.curve.power_list[mmpData.time - 1];
+
+    if (Number.isFinite(pdcPower)) {
+      return {
+        ...mmpData,
+        power: Math.round(pdcPower),
+      };
+    }
+
+    const previousAvailableMMPPoint = findPreviousAvailableMMPPoint(
+        mmpData.time,
+        previousTime,
+    );
+
+    return previousAvailableMMPPoint
+        ? {
+          ...mmpData,
+          time: previousAvailableMMPPoint.time,
+          power: previousAvailableMMPPoint.power,
+        }
+        : mmpData;
+  });
 }
 
 function StrydAutoCPApp() {
@@ -52,7 +91,7 @@ function StrydAutoCPApp() {
     const parsedPDC: StrydPDC = JSON.parse(jsonString);
 
     const updatedMMPData = updateMMPDataFromFile(parsedPDC, initialMMPData)
-    // console.log(updatedMMPData);
+    //console.log(updatedMMPData);
     setMMPData(updatedMMPData);
 
     setReceivedPDC(parsedPDC);
@@ -107,26 +146,46 @@ function StrydAutoCPApp() {
 
         <div className="flex gap-2 flex-col grow w-full">
 
-
-
           <div>
             {receivedPDC ? (
-              <ParentSize>{({ width }) =>
-                <div>{width ? (
-                  <AutoCPGC
-                    width={width}
-                    height={400}
-                    pdc={receivedPDC}
-                    initialParams={initialParams}
-                    forecastData={mmpData}
-                    verbose={false}
-                  />
-                ) : (<div>Calculating Extended Parameters from User Data...</div>) }
-                </div>
-              }</ParentSize>
+                <ParentSize>{({ width }) =>
+                    <div>{width ? (
+                        <AutoCPGC
+                            width={width}
+                            height={400}
+                            pdc={receivedPDC}
+                            initialParams={initialParams}
+                            forecastData={mmpData}
+                            modelVersion={5}
+                            thresholdGraph={true}
+                            verbose={true}
+                        />
+                    ) : (<div>Calculating Extended Parameters from User Data...</div>) }
+                    </div>
+                }</ParentSize>
             ) : (<div></div>
             )}
           </div>
+
+          {/*<div>*/}
+          {/*  {receivedPDC ? (*/}
+          {/*    <ParentSize>{({ width }) =>*/}
+          {/*      <div>{width ? (*/}
+          {/*        <AutoCPGC*/}
+          {/*          width={width}*/}
+          {/*          height={400}*/}
+          {/*          pdc={receivedPDC}*/}
+          {/*          initialParams={initialParams}*/}
+          {/*          forecastData={mmpData}*/}
+          {/*          modelVersion={6}*/}
+          {/*          verbose={true}*/}
+          {/*        />*/}
+          {/*      ) : (<div>Calculating Extended Parameters from User Data...</div>) }*/}
+          {/*      </div>*/}
+          {/*    }</ParentSize>*/}
+          {/*  ) : (<div></div>*/}
+          {/*  )}*/}
+          {/*</div>*/}
 
           <div>
             {receivedPDC ? (
@@ -150,7 +209,7 @@ function StrydAutoCPApp() {
                   Instructions
                   <svg className="w-4 h-4 ms-2 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                        fill="none" viewBox="0 0 14 10">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                           d="M1 5h12m0 0L9 1m4 4L9 9"/>
                   </svg>
                 </a></p>
@@ -163,7 +222,7 @@ function StrydAutoCPApp() {
 
       </div>
       <Analytics/>
-      <SpeedInsights/>
+      {/*<SpeedInsights/>*/}
     </main>
   )
 }

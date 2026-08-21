@@ -271,7 +271,7 @@ export default function AutoCP({ width, height, jsonData, initialParams, /*setEx
           <AxisLeft scale={yScale} />
 
           {/*axis and title*/}
-          <text x={20} y={-10} fontSize={16} fillOpacity={0.4}>[ GC Extened CP / 2-point CP | iterations: {finalIterations} ] </text>
+          <text x={20} y={-10} fontSize={16} fillOpacity={0.4}>[ GC Extended CP / 2-point CP | iterations: {finalIterations} ] </text>
           <text x="-70" y="15" transform="rotate(-90)" fontSize={10}>Power (Watts)</text>
           <text x={width - 200} y={height - 100} fontSize={10}>Time (seconds)</text>
           <text x={logScale(cpValidTimeMin) + 10} y={18} fontSize={10}>

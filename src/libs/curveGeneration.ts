@@ -6,7 +6,7 @@ import {
   ExtendedSolution,
   ExtendedLinePoint,
   PTSolution,
-  PTLinePoint,
+  PTLinePoint, ExtendedThresholdLinePoint, StrydPDC,
 } from "../types/interfaces.ts";
 import { plotCP } from "./calculations_cp.ts";
 import { plotFRC, plotFTP, plotTTE } from "./calculations_pt.ts";
@@ -143,9 +143,9 @@ export const generateExtendedCurveDataFromOne =(
   tStep: number,
 ):ExtendedLinePoint[] => {
 
-  const stepsUnderFirstStep = tStep - 1;
+  const stepsUnderTwenty = 20;
 
-  const arrayCount = Math.floor(maxT / tStep) + stepsUnderFirstStep;
+  const arrayCount = Math.floor((maxT - 20) / tStep) + stepsUnderTwenty + 1;
   return new Array(arrayCount).fill(null).map((_, i) =>
     generateExtendedCurveRow(i, extendedSolution, 0, tStep)
   );
@@ -161,11 +161,10 @@ export const generateExtendedCurveRow = (
   let t = minT + x * tStep;
 
   if (minT === 0) {
-    //add steps below tStep
-    if (x < tStep) {
+    if (x < 20) {
       t = x + 1;
     } else {
-      t = tStep + (x + 1 - tStep) * tStep;
+      t = 20 + (x - 19) * tStep;
     }
   }
 
@@ -191,7 +190,7 @@ export const generateExtendedCurveRow = (
     extendedSolution.cpdec,
     extendedSolution.cpdecdel,
   );
-  const total = c1 + c2 + c3;
+  const total = Math.round((c1 + c2 + c3) * 100) / 100;
 
   return {
     x : t,
@@ -200,4 +199,41 @@ export const generateExtendedCurveRow = (
     c3: c3,
     total : total,
   }
+}
+
+export const combineExtendedAndStrydData = (
+    extendedCurveData: ExtendedLinePoint[],
+    strydCurveData: StrydPDC,
+) : ExtendedThresholdLinePoint[] => {
+
+  // console.log('extendedCurveData', extendedCurveData[8]);
+  // console.log('strydCurveData', strydCurveData.breakdown.total[7]);
+  // console.log('strydCurveData', strydCurveData.breakdown.total);
+
+  const combined: ExtendedThresholdLinePoint[] = []
+
+  extendedCurveData.forEach((extendedPoint, i) => {
+    //console.log(i, 'extendedPoint', extendedPoint);
+    //when i = 0 x = 1
+    //but x is stepped by 5
+    const x = extendedPoint.x;
+    const strydBreakdown = strydCurveData.breakdown;
+    if (strydBreakdown.total[x] !== undefined) {
+
+      const c1Stryd = strydBreakdown.alactic[x-1];
+      const c2Stryd = strydBreakdown.anaerobic[x-1];
+      const c3Stryd = strydBreakdown.aerobic[x-1];
+      const totalStryd = strydBreakdown.total[x-1];
+
+      combined[i] = {
+        ...extendedPoint,
+        c1Stryd: c1Stryd,
+        c2Stryd: c2Stryd,
+        c3Stryd: c3Stryd,
+        totalStryd: totalStryd,
+      }
+    }
+  })
+
+  return combined;
 }

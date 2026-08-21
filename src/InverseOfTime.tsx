@@ -1,7 +1,7 @@
 //TODO update colors for red.green color blindness
 
 import { useState } from 'react'
-import LinearThreshold from "./components/LinearThreshold.tsx";
+import InverseThreshold from "./components/InverseThreshold";
 import CPThreshold from "./components/CPThreshold.tsx";
 import SideBar from "./components/SideBar.tsx";
 import {ErrorBoundary} from "react-error-boundary";
@@ -18,7 +18,7 @@ interface LinearGraphData {
   testTwoLongWatt: number;
 }
 
-const App = () => {
+const InverseOfTime = () => {
 
   //console.log("running app")
 
@@ -49,6 +49,7 @@ const App = () => {
             setLinearData={setLinearData}
             expandZones={expandZones}
             setExpandZones={setExpandZones}
+            appPath={'/inverse'}
           />
 
         </div>
@@ -57,8 +58,8 @@ const App = () => {
           <div>
               <ParentSize debounceTime={100}>
                 {({width}) =>
-                    <ErrorBoundary fallback={<div>Error rendering LinearThreshold</div>}>
-                      <LinearThreshold width={width} height={250} data={linearData}/>
+                    <ErrorBoundary fallback={<div>Error rendering InverseThreshold</div>}>
+                      <InverseThreshold width={width} height={250} data={linearData}/>
                     </ErrorBoundary>
 
                 }
@@ -77,4 +78,4 @@ const App = () => {
   )
 }
 
-export default App
+export default InverseOfTime
