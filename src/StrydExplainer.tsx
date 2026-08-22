@@ -45,7 +45,7 @@ function StrydInstructions() {
           </ul>
 
           <h3 className="text-l font-bold mt-3">What Stryd thinks your Extended CP model looks like</h3>
-          <p>This is the data used to creat the Stryd Power Duration Curve.
+          <p>This is the data used to create the Stryd Power Duration Curve.
           As noted in the instructions this is the "pdc?include_breakdown=1" file.
           </p>
           <pre><code>
