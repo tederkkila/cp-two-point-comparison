@@ -83,7 +83,12 @@ const JsonFileLoader: React.FC<InputComponentProps> = ({ onDataSubmit }) => {
         Upload File
       </button>
       {selectedFileName && (
-        <p style={{ marginLeft: '10px', display: 'inline-block' }}>Selected file: {selectedFileName}</p>
+        <p style={{ marginLeft: '10px', display: 'inline-block' }}>Selected file: {selectedFileName} (
+          <a
+              href="/strydexplainer"
+              target="_blank"
+              className="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline"
+          >How to interpret</a>)</p>
       )}
       {error && <div style={{ color: 'red', marginTop: '10px' }}>{error}</div>}
 
