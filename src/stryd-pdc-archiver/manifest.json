@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Stryd Data Archiver",
+  "version": "1.0",
+  "description": "Download your Stryd power duration curve data (with username, critical power, and date) for analysis and archiving.",
+  "permissions": [
+    "webRequest",
+    "downloads",
+    "storage",
+    "activeTab",
+    "declarativeNetRequest",
+    "scripting"
+  ],
+  "action": {
+    "default_title": "Download Stryd PDC Data"
+  },
+  "host_permissions": [
+    "https://www.stryd.com/*",
+    "https://api.stryd.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}

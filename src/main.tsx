@@ -18,6 +18,7 @@ import AutoCPFindTimeIntervalsApp from "./AutoCPFindTimeIntervalsApp.tsx";
 import StrydAutoCPApp from "./StrydAutoCPApp.tsx";
 import StrydInstructions from "./StrydInstructions.tsx";
 import StrydExplainer from "./StrydExplainer.tsx";
+import ChromeExtension from "./ChromeExtension.tsx";
 
 const router = createBrowserRouter([
   {
@@ -43,6 +44,10 @@ const router = createBrowserRouter([
   {
     path: "/strydexplainer",
     element: <StrydExplainer />,
+  },
+  {
+    path: "/chromeextension",
+    element: <ChromeExtension />,
   },
   {
     path: "/pt",

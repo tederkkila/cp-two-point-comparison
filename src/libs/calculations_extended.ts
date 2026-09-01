@@ -144,12 +144,14 @@ export const solve_cp = (
     ;
   } else if (version == 6) {
     cp = (power - (params.paa * (1.10 - 0.10 * Math.exp(-8 * x)) * Math.exp(params.paadec * x)))
-      / (1 + params.cpdec*Math.exp(params.cpdecdel / (x)))
+      / (1 + params.cpdec * Math.exp(params.cpdecdel / (x)))
       / (
-        (1-Math.exp(params.cpdel * x))
+        (1 - Math.exp(params.cpdel * x))
         + Math.pow((1 - Math.exp(params.taudel * x)),2) * params.tau / (x)
       )
     ;
+
+    /*version 6 formula validated from github 6.3*/
   }
 
   return cp
@@ -198,8 +200,10 @@ export const solve_tau = (
       (power - params.paa * (1.10 - 0.10 * Math.exp(-8 * x)) * Math.exp(params.paadec * x))
       / params.cp
       / (1 + params.cpdec * Math.exp(params.cpdecdel / (x)))
-      - 1 * (1 - Math.exp(params.cpdel * x))
+      - (1 - Math.exp(params.cpdel * x))
     ) * (x) / Math.pow((1 - Math.exp(params.taudel*x)),2);
+
+    /*version 6 formula validated from github 6.3*/
   }
 
   return tau
@@ -227,8 +231,24 @@ export const solve_paadec = (
 
     preLog = Math.max(preLog, 0.00001);
     paadec = Math.log ( preLog ) / x;
+
   } else if (version == 6) {
-    paadec = 0
+    let preLog =
+        (power
+            - params.cp
+            * (1 + params.cpdec * Math.exp(params.cpdecdel / x))
+            * (
+                (1-Math.exp(params.cpdel*x))
+                + Math.pow((1 - Math.exp(params.taudel*x)),2) * params.tau / (x)
+            )
+        ) / params.paa / (1.10 - 0.10 * Math.exp(-8 * x)) ;
+
+    preLog = Math.max(preLog, 0.00001);
+    paadec = Math.log ( preLog ) / x;
+
+    //console.log(`prelog: ${preLog} paadec: ${paadec}`);
+    /*version 6 formula validated from github 6.3*/
+
   }
 
   return paadec
@@ -242,7 +262,7 @@ export const solve_paa = (
 ) :number => {
 
   const x = t / 60;
-  let paa = 100;
+  let paa = params.paa;
 
   if (version == 5) {
     paa =
@@ -257,6 +277,13 @@ export const solve_paa = (
       / (1.20-0.20 * Math.exp(-1 * x))
       / Math.exp(params.paadec * x)
     ;
+  } else if (version == 6) {
+    paa = (
+        power - params.cp * (1 + params.cpdec * Math.exp(params.cpdecdel / x ))
+        * ( 1 * (1-Math.exp(params.cpdel * x)) + Math.pow((1-Math.exp(params.taudel*x)),2) * params.tau/(x))
+        )
+        / Math.exp(params.paadec * x) / (1.10 - 0.10 * Math.exp(-8 * x));
+
   }
 
   return paa
@@ -378,7 +405,7 @@ export const iterateExtendedParams = (
       avg_tau = ((count_tau - 1) * avg_tau + i_tau) / count_tau;
       highest_tau = Math.max(highest_tau, i_tau);
 
-      console.log(` tau ${params.tau} ${i}: ${i_tau} avg ${avg_tau} high ${highest_tau}`)
+      //console.log(` tau ${params.tau} ${i}: ${i_tau} avg ${avg_tau} high ${highest_tau}`)
       if (params.tau < i_tau ) {
         //console.log(` tau ${params.tau} ${i}: ${i_tau} avg ${avg_tau} update`)
         params.tau = i_tau;
@@ -395,10 +422,10 @@ export const iterateExtendedParams = (
 
     }
 
-    if (params.tau <= 0.5) {
-      console.log(` tau ${params.tau} update with previous ${previousParams.tau}`)
-      params.tau = previousParams.tau;
-    }
+    // if (params.tau <= 0.5) {
+    //   console.log(` tau ${params.tau} update with previous ${previousParams.tau}`)
+    //   params.tau = previousParams.tau;
+    // }
 
     if (verbose) console.log(iteration, "params.tau", params.tau, previousParams.tau, params.tau - previousParams.tau)
     if (verbose) console.log("function data tau", functionalData[2].time, functionalData[2].power);
@@ -457,7 +484,7 @@ export const iterateExtendedParams = (
 
       const i_paa = solve_paa(i, powerArray[i-1], { ...params }, modelVersion);
       avg_paa = ((count_paa - 1) * avg_paa + i_paa) / count_paa;
-      //console.log(" ", i, "i_paa", i_paa, "avg_paa", avg_paa);
+      console.log(" ", i, "i_paa", i_paa, "avg_paa", avg_paa);
 
       if (params.paa < i_paa) {
         updates_paa++;
