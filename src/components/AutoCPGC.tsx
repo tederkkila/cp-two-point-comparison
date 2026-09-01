@@ -207,6 +207,11 @@ export default function AutoCPGC({
     //params.cp = bestIntervals.bestAE.power;
     params.cpdec = -0.6;
 
+    if (modelVersion ==6) {
+      params.taudel = -1.2
+      params.cpdec = -1
+    }
+
     const maxLoops = 10;
     //const modelVersion = 5; //use 5!
 
