@@ -46,7 +46,7 @@ const router = createBrowserRouter([
     element: <StrydExplainer />,
   },
   {
-    path: "/chromeextension",
+    path: "/chrome-extension",
     element: <ChromeExtension />,
   },
   {

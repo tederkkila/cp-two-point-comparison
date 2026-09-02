@@ -28,19 +28,22 @@ function StrydInstructions() {
 
         {/*graphs*/}
         <div className="flex gap-2 flex-col grow rounded-lg bg-gray-50 px-2 py-2">
-          <p>This Chrome extension does not share any personal information. It only downloads your Stryd power duration curve data (with username, critical power, and date) for analysis and archiving. The data is stored locally on your device and is not transmitted to any third-party servers.</p>
+          <h3 className="text-lg font-semibold">Privacy Policy</h3>
+          <p>This Chrome extension does not share any personal information!</p>
+          <p>It only downloads your Stryd power duration curve data (with username, critical power, and date) to your computer for analysis and archiving.</p>
           <p>However, does collect and store data from your browser to function properly:</p>
           <ul className="list-disc list-inside space-y-1 dark:text-gray-400">
             <li>Collected Stryd data includes:</li>
             <ul className="list-[circle] list-inside ps-5 space-y-1">
-              <li>The user's authentication token</li>
-              <li>The user's 19 digit user identifier from the url.</li>
+              <li>The user's authentication token (to create properly authenticated requests)</li>
+              <li>The user's 19 digit user identifier from the url (ex. ad4c4b19-bb01-5282-7b1e-05f82b156ccb)</li>
               <li>The user's username (for naming the downloaded file)</li>
               <li>The user's critical power (for naming the downloaded file)</li>
               <li>The user's power duration curve data (which should be considered Health Data).</li>
             </ul>
-            <li>Storage of downloaded user authentication token and user ID locally on your device</li>
+            <li>The user authentication token and user ID are stored locally on your device</li>
           </ul>
+          <p>The data is stored locally on your device and is never transmitted to any third-party.</p>
         </div>
 
       </div>
