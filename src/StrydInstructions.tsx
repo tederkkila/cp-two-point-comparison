@@ -23,8 +23,13 @@ function StrydInstructions() {
           </a></p>
 
         </div>
+        <div className="flex gap-2 flex-col grow rounded-lg bg-gray-50 px-2 py-2">
+          </div>
         {/*graphs*/}
         <div className="flex gap-2 flex-col grow rounded-lg bg-gray-50 px-2 py-2">
+          <p>NEW! I have created a chrome extension to download your Stryd power duration curve data to your computer for analysis and archiving.<br/>
+            Find more info here: <a href="/chrome-extension/" className="inline-flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">Chrome Extension</a></p>
+
           <h3 className="text-l font-bold">Go to Stryd PowerCenter Website in Google Chrome or Safari</h3>
           <p>On a desktop or laptop: Navigate to <a href={"https://stryd.com/powercenter/"}>stryd.com/powercenter/</a> in Google Chrome or Safari</p>
 
